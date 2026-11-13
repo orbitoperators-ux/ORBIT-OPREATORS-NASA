@@ -1,0 +1,1691 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Dancing with the SARs · NISAR Surface Change Explorer</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg: #0b1220;
+  --surface: #111827;
+  --surface2: #1a2332;
+  --line: #243044;
+  --fg: #e8eef7;
+  --muted: #94a3b8;
+  --accent: #22d3ee;
+  --accent-ink: #0b1220;
+  --f-display: "Space Grotesk", system-ui, sans-serif;
+  --f-body: "Inter", system-ui, sans-serif;
+  --radius: 14px;
+  --shadow: 0 12px 40px rgba(0,0,0,.35);
+  color-scheme: dark;
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+html { scroll-behavior: smooth; }
+body {
+  background: var(--bg); color: var(--fg); font-family: var(--f-body); font-size: 16px; line-height: 1.6;
+  min-height: 100vh;
+}
+a { color: var(--accent); text-decoration: none; }
+button, select, input { font: inherit; color: inherit; }
+
+.nav {
+  position: sticky; top: 0; z-index: 50;
+  background: rgba(11,18,32,.88); backdrop-filter: blur(12px);
+  border-bottom: 1px solid var(--line);
+}
+.nav-inner {
+  max-width: 1140px; margin: 0 auto; padding: 14px 20px;
+  display: flex; align-items: center; justify-content: space-between; gap: 16px;
+}
+.logo {
+  font-family: var(--f-display); font-weight: 700; font-size: 1.15rem;
+  display: flex; align-items: center; gap: 8px; color: var(--fg);
+}
+.logo span { color: var(--accent); }
+.nav-links { display: flex; gap: 4px; flex-wrap: wrap; }
+.nav-links a {
+  color: var(--muted); padding: 8px 14px; border-radius: 8px; font-weight: 500; font-size: 14px;
+  transition: color .15s, background .15s;
+}
+.nav-links a:hover, .nav-links a.active { color: var(--fg); background: var(--surface2); }
+.nav-cta {
+  background: var(--accent); color: var(--accent-ink); border: 0; border-radius: 8px;
+  padding: 9px 16px; font-weight: 600; font-size: 14px; cursor: pointer; text-decoration: none;
+}
+
+.hero {
+  position: relative; overflow: hidden;
+  padding: 80px 20px 60px;
+  background: radial-gradient(ellipse 80% 60% at 50% -10%, rgba(34,211,238,.12), transparent 60%),
+              linear-gradient(180deg, #0b1220 0%, #0e1628 100%);
+}
+.hero-inner { max-width: 880px; margin: 0 auto; text-align: center; }
+.hero .eyebrow {
+  display: inline-flex; align-items: center; gap: 8px;
+  font-size: 13px; font-weight: 600; letter-spacing: .06em; text-transform: uppercase;
+  color: var(--accent); background: rgba(34,211,238,.1); border: 1px solid rgba(34,211,238,.25);
+  padding: 6px 14px; border-radius: 999px; margin-bottom: 22px;
+}
+.hero h1 {
+  font-family: var(--f-display); font-size: clamp(2.2rem, 6vw, 3.3rem); font-weight: 700;
+  line-height: 1.15; margin-bottom: 16px; letter-spacing: -0.02em;
+}
+.hero h1 em { font-style: normal; color: var(--accent); }
+.hero p { color: var(--muted); font-size: 1.1rem; max-width: 540px; margin: 0 auto 28px; }
+.hero-actions { display: flex; gap: 12px; justify-content: center; flex-wrap: wrap; }
+.btn {
+  display: inline-flex; align-items: center; gap: 8px;
+  background: var(--accent); color: var(--accent-ink); border: 0; border-radius: 10px;
+  padding: 12px 22px; font-weight: 600; font-size: 15px; cursor: pointer;
+  transition: transform .12s, filter .15s; text-decoration: none;
+}
+.btn:hover { filter: brightness(1.08); transform: translateY(-1px); }
+.btn.ghost { background: transparent; color: var(--fg); border: 1px solid var(--line); }
+.btn.ghost:hover { border-color: var(--accent); color: var(--accent); }
+
+section { padding: 64px 20px; }
+.section-inner { max-width: 1140px; margin: 0 auto; }
+.section-head { text-align: center; margin-bottom: 40px; }
+.section-head h2 {
+  font-family: var(--f-display); font-size: clamp(1.6rem, 3.5vw, 2.1rem); font-weight: 700;
+  margin-bottom: 10px;
+}
+.section-head p { color: var(--muted); max-width: 540px; margin: 0 auto; }
+
+.features {
+  display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 18px;
+}
+.feature {
+  background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius); padding: 22px;
+}
+.feature .icon {
+  width: 42px; height: 42px; border-radius: 10px; background: rgba(34,211,238,.12);
+  display: flex; align-items: center; justify-content: center; font-size: 18px; margin-bottom: 14px;
+}
+.feature h3 { font-size: 1.05rem; margin-bottom: 6px; }
+.feature p { font-size: 14px; color: var(--muted); }
+
+.explorer {
+  background: var(--surface); border: 1px solid var(--line); border-radius: 16px;
+  overflow: hidden; box-shadow: var(--shadow);
+}
+.explorer-toolbar {
+  display: flex; flex-wrap: wrap; gap: 8px; padding: 14px 16px; border-bottom: 1px solid var(--line);
+  background: var(--surface2); align-items: center;
+}
+.chip {
+  background: var(--bg); border: 1px solid var(--line); border-radius: 999px;
+  padding: 6px 14px; font-size: 13px; font-weight: 500; cursor: pointer; color: var(--muted);
+  transition: all .15s;
+}
+.chip:hover { border-color: var(--accent); color: var(--fg); }
+.chip.active { background: var(--accent); color: var(--accent-ink); border-color: var(--accent); }
+.explorer-main { display: grid; grid-template-columns: 1fr 270px; min-height: 400px; }
+@media (max-width: 860px) { .explorer-main { grid-template-columns: 1fr; } }
+.viewer { position: relative; background: #060a12; }
+.viewer canvas { display: block; width: 100%; height: auto; aspect-ratio: 16/10; cursor: crosshair; }
+.viewer-badge {
+  position: absolute; top: 12px; left: 12px;
+  background: rgba(0,0,0,.7); color: #fff; font-size: 12px; font-weight: 500;
+  padding: 5px 10px; border-radius: 6px; backdrop-filter: blur(6px);
+}
+.side-panel { border-left: 1px solid var(--line); padding: 16px; background: var(--surface); }
+.side-panel h4 { font-size: 12px; text-transform: uppercase; letter-spacing: .06em; color: var(--muted); margin-bottom: 10px; }
+.stat-row { display: flex; justify-content: space-between; padding: 8px 0; border-bottom: 1px solid var(--line); font-size: 14px; }
+.stat-row b { color: var(--accent); font-variant-numeric: tabular-nums; }
+.side-panel .hypo { margin-top: 14px; font-size: 13px; color: var(--muted); line-height: 1.5; }
+.play-row { display: flex; align-items: center; gap: 10px; padding: 12px 16px; border-top: 1px solid var(--line); background: var(--surface2); }
+.play-row .btn { padding: 8px 14px; font-size: 13px; }
+.track { flex: 1; height: 6px; background: var(--line); border-radius: 3px; position: relative; cursor: pointer; }
+.track .fill { position: absolute; left: 0; top: 0; height: 100%; background: var(--accent); border-radius: 3px; }
+.track .knob { position: absolute; top: 50%; width: 12px; height: 12px; margin: -6px 0 0 -6px; background: var(--accent); border-radius: 50%; box-shadow: 0 0 0 3px var(--surface2); }
+
+.docs-grid {
+  display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 18px;
+}
+.doc-card {
+  background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius);
+  overflow: hidden; display: flex; flex-direction: column; transition: border-color .2s, transform .2s;
+}
+.doc-card:hover { border-color: rgba(34,211,238,.4); transform: translateY(-2px); }
+.doc-preview {
+  height: 120px; background: linear-gradient(135deg, #1a2332, #0f172a);
+  display: flex; align-items: center; justify-content: center; font-size: 36px;
+}
+.doc-body { padding: 16px; flex: 1; display: flex; flex-direction: column; }
+.doc-body h3 { font-size: 1rem; margin-bottom: 4px; }
+.doc-body .meta { font-size: 12px; color: var(--muted); margin-bottom: 8px; }
+.doc-body p { font-size: 13px; color: var(--muted); margin-bottom: 14px; flex: 1; }
+.doc-body .btn { width: 100%; justify-content: center; padding: 10px; font-size: 14px; }
+
+footer {
+  border-top: 1px solid var(--line); padding: 32px 20px; text-align: center;
+  color: var(--muted); font-size: 13px;
+}
+footer a { color: var(--muted); }
+footer a:hover { color: var(--accent); }
+label { display: block; font-size: 12px; font-weight: 600; color: var(--muted); margin-bottom: 6px; text-transform: uppercase; letter-spacing: .04em; }
+select {
+  width: 100%; background: var(--bg); border: 1px solid var(--line); border-radius: 8px;
+  padding: 9px 12px; font-size: 14px;
+}
+
+/* ===== Welcome / Launch sequence ===== */
+.welcome {
+  position: fixed; inset: 0; z-index: 200;
+  display: flex; align-items: center; justify-content: center;
+  background: rgba(6,10,18,.92); backdrop-filter: blur(10px);
+  padding: 20px;
+}
+.welcome[hidden] { display: none !important; }
+.wcard {
+  width: 100%; max-width: 440px;
+  background: var(--surface); border: 1px solid var(--line); border-radius: 18px;
+  padding: 32px 28px 28px; text-align: center;
+  box-shadow: 0 24px 60px rgba(0,0,0,.5);
+}
+.wcard .icon-wrap {
+  width: 72px; height: 72px; margin: 0 auto 18px;
+  border-radius: 50%; background: rgba(34,211,238,.1);
+  border: 1px solid rgba(34,211,238,.3);
+  display: flex; align-items: center; justify-content: center;
+}
+.wcard .icon-wrap svg { width: 40px; height: 40px; }
+.wcard h2 {
+  font-family: var(--f-display); font-size: 1.55rem; margin-bottom: 10px; line-height: 1.25;
+}
+.wcard .tech {
+  font-size: 13px; color: var(--muted); line-height: 1.55; margin-bottom: 22px; text-align: left;
+  background: var(--bg); border-radius: 10px; padding: 14px 16px; border: 1px solid var(--line);
+}
+.wcard .tech code {
+  font-family: ui-monospace, monospace; font-size: 12px; color: var(--accent);
+  background: rgba(34,211,238,.08); padding: 1px 5px; border-radius: 4px;
+}
+.wcard .btn { width: 100%; justify-content: center; padding: 14px; font-size: 16px; }
+
+/* Launch / radar loading */
+.launch {
+  position: fixed; inset: 0; z-index: 210;
+  background: radial-gradient(ellipse at center, #0c1524 0%, #060a12 70%);
+  display: flex; flex-direction: column;
+  align-items: center; justify-content: center;
+  transition: opacity .55s ease;
+  cursor: default;
+  overflow: hidden;
+}
+.launch[hidden] { display: none !important; }
+.launch.out { opacity: 0; pointer-events: none; }
+
+/* Animated CSS radar rings behind canvas */
+.launch .radar-wrap {
+  position: relative;
+  width: min(420px, 85vw);
+  height: min(420px, 85vw);
+  display: flex; align-items: center; justify-content: center;
+}
+.launch .radar-wrap::before,
+.launch .radar-wrap::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+  border: 1.5px solid rgba(34, 211, 238, 0.25);
+  animation: radar-pulse 2.8s ease-out infinite;
+  pointer-events: none;
+}
+.launch .radar-wrap::after {
+  animation-delay: 1.4s;
+}
+@keyframes radar-pulse {
+  0%   { transform: scale(0.35); opacity: 0.7; }
+  70%  { opacity: 0.15; }
+  100% { transform: scale(1.15); opacity: 0; }
+}
+
+/* Soft outer glow */
+.launch .radar-wrap .glow {
+  position: absolute;
+  inset: -20%;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(34,211,238,0.12) 0%, transparent 65%);
+  animation: glow-breathe 3s ease-in-out infinite;
+  pointer-events: none;
+}
+@keyframes glow-breathe {
+  0%, 100% { opacity: 0.6; transform: scale(1); }
+  50%      { opacity: 1; transform: scale(1.05); }
+}
+
+.launch canvas {
+  position: relative;
+  z-index: 2;
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+  box-shadow: 0 0 40px rgba(34, 211, 238, 0.15),
+              0 0 80px rgba(34, 211, 238, 0.06);
+}
+
+.launch .ltxt {
+  margin-top: 28px;
+  font-size: 13px;
+  font-weight: 600;
+  letter-spacing: .14em;
+  text-transform: uppercase;
+  color: var(--fg);
+  text-align: center;
+  animation: text-fade 2s ease-in-out infinite;
+}
+@keyframes text-fade {
+  0%, 100% { opacity: 0.75; }
+  50%      { opacity: 1; }
+}
+
+.launch .lbar {
+  width: min(220px, 60vw);
+  height: 3px;
+  margin: 14px auto 0;
+  background: var(--line);
+  border-radius: 2px;
+  overflow: hidden;
+  position: relative;
+}
+.launch .lbar i {
+  display: block;
+  height: 100%;
+  width: 0;
+  background: linear-gradient(90deg, #0891b2, #22d3ee, #67e8f9);
+  border-radius: 2px;
+  transition: width .12s linear;
+  box-shadow: 0 0 10px rgba(34, 211, 238, 0.5);
+}
+
+/* Subtle scan-line overlay on whole launch screen */
+.launch .scan-overlay {
+  position: absolute;
+  inset: 0;
+  background: repeating-linear-gradient(
+    0deg,
+    transparent,
+    transparent 2px,
+    rgba(34, 211, 238, 0.015) 2px,
+    rgba(34, 211, 238, 0.015) 4px
+  );
+  pointer-events: none;
+  z-index: 1;
+}
+
+
+
+
+/* Satellite background decoration */
+.sat-bg {
+  position: fixed;
+  right: -30px;
+  bottom: 6%;
+  width: min(360px, 44vw);
+  height: auto;
+  opacity: 0.16;
+  pointer-events: none;
+  z-index: 0;
+  filter: drop-shadow(0 0 28px rgba(34, 211, 238, 0.3))
+          drop-shadow(0 0 60px rgba(34, 211, 238, 0.1));
+  animation: sat-float 12s ease-in-out infinite;
+  transform-origin: center center;
+}
+.sat-bg svg {
+  width: 100%;
+  height: auto;
+  display: block;
+}
+/* Gentle orbital drift */
+@keyframes sat-float {
+  0%, 100% { transform: translate(0, 0) rotate(-2deg); }
+  25%      { transform: translate(-8px, -12px) rotate(0deg); }
+  50%      { transform: translate(4px, -6px) rotate(2deg); }
+  75%      { transform: translate(-4px, -14px) rotate(-1deg); }
+}
+/* Soft pulsing glow on the reflector region via SVG filter feel */
+.sat-bg svg ellipse {
+  animation: dish-glow 4s ease-in-out infinite;
+}
+@keyframes dish-glow {
+  0%, 100% { opacity: 0.75; }
+  50%      { opacity: 1; }
+}
+/* Secondary smaller satellite accent (optional depth) */
+.sat-bg::after {
+  content: "";
+  position: absolute;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #22d3ee;
+  top: 18%;
+  left: 12%;
+  opacity: 0.35;
+  box-shadow: 0 0 12px #22d3ee, 0 0 24px rgba(34,211,238,0.4);
+  animation: star-twinkle 3s ease-in-out infinite;
+}
+@keyframes star-twinkle {
+  0%, 100% { opacity: 0.2; transform: scale(0.8); }
+  50%      { opacity: 0.55; transform: scale(1.15); }
+}
+@media (max-width: 700px) {
+  .sat-bg {
+    width: min(230px, 58vw);
+    opacity: 0.11;
+    right: -16px;
+    bottom: 4%;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .sat-bg { animation: none; }
+  .sat-bg svg ellipse { animation: none; }
+  .sat-bg::after { animation: none; }
+}
+/* keep main content above satellite */
+.nav, .hero, section, footer { position: relative; z-index: 1; }
+
+
+/* Big 3D satellite background */
+#sat3d{position:fixed;inset:0;width:100vw;height:100vh;z-index:0;pointer-events:none;opacity:.55}
+@media (max-width:700px){#sat3d{opacity:.35}}
+
+/* let the satellite show through the page */
+.hero{background:radial-gradient(ellipse 80% 60% at 50% -10%,rgba(34,211,238,.12),transparent 60%)!important}
+#docs,#about{background:rgba(10,16,28,.55)!important}
+.feature,.doc-card{background:rgba(17,24,39,.82)}
+/* ===== Knowledge hub ===== */
+.tabs{display:flex;flex-wrap:wrap;gap:8px;justify-content:center;margin-bottom:26px}
+.tab{background:var(--surface);border:1px solid var(--line);color:var(--muted);border-radius:10px;padding:10px 16px;font-weight:600;font-size:14px;cursor:pointer;transition:all .15s}
+.tab:hover{color:var(--fg);border-color:var(--accent)}
+.tab.active{background:var(--accent);color:var(--accent-ink);border-color:var(--accent)}
+.tabpanel{display:none;background:rgba(17,24,39,.82);border:1px solid var(--line);border-radius:16px;padding:28px;animation:fadein .25s ease}
+.tabpanel.active{display:block}
+@keyframes fadein{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
+.ph{font-family:var(--f-display);font-size:1.4rem;margin-bottom:8px}
+.lead{color:var(--muted);margin-bottom:20px;max-width:720px}
+.two-col{display:grid;grid-template-columns:1.4fr 1fr;gap:24px}
+@media(max-width:860px){.two-col{grid-template-columns:1fr}.tabpanel{padding:18px}}
+.prob{display:flex;gap:14px;padding:14px 0;border-bottom:1px solid var(--line)}
+.prob>b{flex:none;width:32px;height:32px;border-radius:50%;background:rgba(34,211,238,.12);color:var(--accent);display:flex;align-items:center;justify-content:center}
+.prob h4{font-size:1rem;margin-bottom:3px}.prob p{font-size:14px;color:var(--muted)}
+.side-card{background:var(--bg);border:1px solid var(--line);border-radius:14px;padding:18px}
+.side-card h4{font-size:12px;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);margin-bottom:10px}
+.kv{display:flex;justify-content:space-between;gap:10px;padding:8px 0;border-bottom:1px solid var(--line);font-size:14px}
+.kv b{color:var(--accent);font-weight:600;text-align:right}
+.thumb,.wide{display:block;width:100%;height:auto;border-radius:10px;margin-top:14px;border:1px solid var(--line)}
+.cap{font-size:12px;color:var(--muted);margin-top:8px}
+.table-wrap{overflow-x:auto;border:1px solid var(--line);border-radius:12px}
+.dt{width:100%;border-collapse:collapse;font-size:14px;min-width:560px}
+.dt th{background:var(--surface2);text-align:left;padding:12px 14px;font-size:12px;text-transform:uppercase;letter-spacing:.05em;color:var(--muted)}
+.dt td{padding:12px 14px;border-top:1px solid var(--line);vertical-align:top}
+.dt td:first-child{font-weight:600;color:var(--fg)}
+.dt tbody tr:hover{background:rgba(34,211,238,.05)}
+.stat-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:14px;margin-bottom:20px}
+.stat{background:var(--bg);border:1px solid var(--line);border-radius:12px;padding:16px;text-align:center}
+.stat b{display:block;font-family:var(--f-display);font-size:1.5rem;color:var(--accent)}
+.stat span{font-size:12px;color:var(--muted)}
+.case-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:18px}
+.case{background:var(--bg);border:1px solid var(--line);border-radius:14px;overflow:hidden}
+.case canvas{display:block;width:100%;height:auto}
+.case .cb{padding:16px}
+.case h4{font-size:1.05rem;margin-bottom:6px}
+.case p{font-size:13px;color:var(--muted);margin-bottom:10px}
+.tags{display:flex;flex-wrap:wrap;gap:6px}
+.tags span{font-size:11px;font-weight:600;padding:3px 9px;border-radius:999px;background:rgba(34,211,238,.1);color:var(--accent);border:1px solid rgba(34,211,238,.25)}
+.steps{padding-left:20px;font-size:14px;color:var(--muted)}.steps li{padding:5px 0}
+.calc{max-width:760px;margin:0 auto}
+.calc label{text-transform:none;font-size:15px;letter-spacing:0}
+input[type=range]{width:100%;accent-color:#22d3ee}
+.faq{background:var(--bg);border:1px solid var(--line);border-radius:12px;padding:14px 16px;margin-bottom:10px}
+.faq summary{cursor:pointer;font-weight:600}
+.faq p{margin-top:10px;color:var(--muted);font-size:14px}
+
+/* ===== multi-page tabs ===== */
+.nav-inner{gap:20px}
+.nav-links{flex:1;min-width:0;flex-wrap:nowrap;overflow-x:auto;scrollbar-width:thin;justify-content:flex-start}
+.nav-links a{white-space:nowrap}
+.nav-links a.active{background:var(--accent);color:var(--accent-ink)}
+#hubTabs,#hub .section-head{display:none}
+#hub{padding-top:36px}
+.pager{display:flex;justify-content:space-between;gap:12px;margin-top:26px}
+.pager a{background:var(--surface2);border:1px solid var(--line);border-radius:10px;padding:10px 16px;font-weight:600;font-size:14px;color:var(--fg)}
+.pager a:hover{border-color:var(--accent);color:var(--accent)}
+.page-title{font-family:var(--f-display);font-size:clamp(1.6rem,3.5vw,2.1rem);margin-bottom:18px;text-align:center}
+@media(max-width:700px){.nav-inner{flex-direction:column;align-items:stretch;gap:8px}}
+/* ===== team page ===== */
+.team-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:18px;max-width:1000px;margin:0 auto}
+.member{background:rgba(17,24,39,.82);border:1px solid var(--line);border-radius:16px;padding:26px 20px;text-align:center;transition:border-color .15s}
+.member:hover{border-color:var(--accent)}
+.member .avatar{width:76px;height:76px;margin:0 auto 16px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-family:var(--f-display);font-size:1.6rem;font-weight:700;color:var(--accent);background:rgba(34,211,238,.1);border:2px solid rgba(34,211,238,.35)}
+.member h3{font-family:var(--f-display);font-size:1.15rem;margin-bottom:8px}
+.member .role{display:inline-block;font-size:12px;font-weight:600;padding:4px 12px;border-radius:999px;background:rgba(34,211,238,.1);color:var(--accent);border:1px solid rgba(34,211,238,.25);margin-bottom:12px}
+.member p{font-size:13px;color:var(--muted)}
+</style>
+
+<style>
+.upgrade-grid{display:grid;grid-template-columns:1.15fr .85fr;gap:18px}
+.panelx{background:var(--surface);border:1px solid var(--line);border-radius:16px;padding:20px}
+.panelx h3{font-family:var(--f-display);margin-bottom:8px}
+.panelx p,.smallx{color:var(--muted);font-size:14px}
+.mapbox{position:relative;overflow:hidden;background:linear-gradient(180deg,#101c31,#0c1423);border:1px solid var(--line);border-radius:12px;padding:8px}
+.mapbox svg{width:100%;height:auto;display:block}
+.mapdot{cursor:pointer;stroke:#06101b;stroke-width:2;transition:r .15s,fill .15s}
+.mapdot:hover{r:10}
+.mapdot.active{fill:#fbbf24;stroke:#fff}
+.maplabel{font:12px Inter,sans-serif;fill:#dbeafe;pointer-events:none}
+.mapinfo{margin-top:12px;padding:12px;background:var(--surface2);border-radius:10px}
+.compare-wrap{position:relative;overflow:hidden;border-radius:12px;border:1px solid var(--line);background:#080d16}
+.compare-wrap canvas{display:block;width:100%;height:auto}
+.compare-overlay{position:absolute;inset:0;width:50%;overflow:hidden;border-right:2px solid #fff}
+.compare-overlay canvas{width: min(100vw, 100%);max-width:none}
+.compare-range{width:100%;accent:var(--accent);margin:14px 0}
+.metric-row{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:12px}
+.metricx{padding:12px;background:var(--surface2);border-radius:10px}
+.metricx strong{display:block;color:var(--accent);font-size:1.15rem}
+.metricx span{font-size:12px;color:var(--muted)}
+.confidence-bar{height:9px;background:#263244;border-radius:999px;overflow:hidden;margin:10px 0}
+.confidence-bar span{display:block;height:100%;width:62%;background:linear-gradient(90deg,#f59e0b,#22d3ee);transition:width .2s}
+@media(max-width:800px){.upgrade-grid{grid-template-columns:1fr}.metric-row{grid-template-columns:1fr 1fr}}
+</style>
+
+</head>
+<body>
+
+<!-- Welcome dialog -->
+<div class="welcome" id="welcome" role="dialog" aria-modal="true" aria-labelledby="wTitle">
+  <div class="wcard">
+    <div class="icon-wrap" aria-hidden="true">
+      <svg viewBox="0 0 48 48" fill="none">
+        <circle cx="24" cy="24" r="18" stroke="#22d3ee" stroke-width="1.5" opacity=".5"/>
+        <circle cx="24" cy="24" r="10" stroke="#22d3ee" stroke-width="1.5"/>
+        <circle cx="24" cy="24" r="3" fill="#22d3ee"/>
+        <path d="M24 6v4M24 38v4M6 24h4M38 24h4" stroke="#22d3ee" stroke-width="1.5" stroke-linecap="round" opacity=".6"/>
+      </svg>
+    </div>
+    <h2 id="wTitle">NISAR Dual-Band SAR Pipeline</h2>
+    <div class="tech">
+      Initializing <code>L-band 1.25 GHz</code> &amp; <code>S-band 3.2 GHz</code> SweepSAR channels.<br>
+      Loading geocoded SLC · interferogram · pixel-offset product suite.<br>
+      Orbit: sun-synchronous · 747 km · 12-day exact repeat · swath &gt; 240 km.<br>
+      Ready to track surface deformation, flood extent, biomass &amp; ice dynamics.
+    </div>
+    <button class="btn" id="wGo" type="button">Let’s explore</button>
+  </div>
+</div>
+
+<!-- Radar loading screen -->
+
+<!-- Decorative NISAR-style satellite in background -->
+<canvas id="sat3d" aria-hidden="true"></canvas>
+
+<div class="launch" id="launch" hidden>
+  <div class="scan-overlay" aria-hidden="true"></div>
+  <div class="radar-wrap">
+    <div class="glow" aria-hidden="true"></div>
+    <canvas id="radarCv" width="420" height="420"></canvas>
+  </div>
+  <div class="ltxt" id="lMsg">Powering up the radar</div>
+  <div class="lbar"><i id="lFill"></i></div>
+</div>
+
+
+
+<nav class="nav">
+  <div class="nav-inner">
+    <a href="#home" class="logo">NISAR <span>Explorer</span></a>
+    <div class="nav-links" id="navLinks">
+      <a href="#home">Home</a>
+      <a href="#explore">Explorer</a>
+      <a href="#problem">Problem</a>
+      <a href="#solution">Solution</a>
+      <a href="#cases">Case studies</a>
+      <a href="#mission">Mission</a>
+      <a href="#bands">L vs S</a>
+      <a href="#products">Products</a>
+      <a href="#calc">Calculator</a>
+      <a href="#glossary">Glossary</a>
+      <a href="#data">Get data</a>
+      <a href="#docs">Documents</a>
+      <a href="#faq">FAQ</a>
+      <a href="#stack">Tech Stack</a><a href="#challenges">More Challenges</a><a href="#sources">Sources</a><a href="#maplab">Geo Lab</a><a href="#compare">Compare</a><a href="#quality">Quality</a><a href="#about">About</a><a href="#team">Team</a>
+    </div>
+    
+  </div>
+</nav>
+
+<header class="hero" id="home">
+  <div class="hero-inner">
+    <div class="eyebrow">2026 NASA Space Apps · Dancing with the SARs</div>
+    <h1>See Earth’s surface <em>dance</em> with NISAR radar</h1>
+    <p>An interactive application that tracks and visualizes surface change — floods, deformation, forests, ice and agriculture — using NASA-ISRO Synthetic Aperture Radar physics and real data pathways.</p>
+    <div class="hero-actions">
+      <a href="#explore" class="btn">Open Interactive Explorer</a>
+      <a href="#docs" class="btn ghost">Project Documents</a>
+    </div>
+  </div>
+</header>
+
+<section id="features">
+  <div class="section-inner">
+    <div class="section-head">
+      <h2>Built for the challenge</h2>
+      <p>Interactive change tracking, NISAR-centric products, study areas, physical drivers, and a clear path to real data.</p>
+    </div>
+    <div class="features">
+      <div class="feature">
+        <div class="icon">📡</div>
+        <h3>Dual-band radar physics</h3>
+        <p>L-band (24 cm) and S-band (9.4 cm) simulations matching NISAR wavelength-dependent penetration, coherence and fringe density.</p>
+      </div>
+      <div class="feature">
+        <div class="icon">🗺️</div>
+        <h3>Surface-change tracking</h3>
+        <p>Flood extent, ground deformation, vegetation loss, glacier motion and agricultural moisture — with evolving stats and hypotheses.</p>
+      </div>
+      <div class="feature">
+        <div class="icon">⏱️</div>
+        <h3>Time-series & products</h3>
+        <p>Playable multi-date sequences, GRD/RTC intensity, change maps, interferograms and pixel-offset fields.</p>
+      </div>
+      <div class="feature">
+        <div class="icon">🔗</div>
+        <h3>Path to real NISAR data</h3>
+        <p>Direct links and workflow for ASF Vertex, Earthdata Search and official sample products.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section id="explore" style="padding-top:20px">
+  <div class="section-inner">
+    <div class="section-head">
+      <h2>Interactive Explorer</h2>
+      <p>Select a study area and change type. Scrub time, switch bands and products.</p>
+    </div>
+
+    <div class="explorer">
+      <div class="explorer-toolbar">
+        <span style="font-size:13px;color:var(--muted);margin-right:4px">Area</span>
+        <button class="chip active" data-area="maine">Maine coast</button>
+        <button class="chip" data-area="nd">N. Dakota farms</button>
+        <button class="chip" data-area="delta">Wetland delta</button>
+        <button class="chip" data-area="volcano">Volcano</button>
+        <button class="chip" data-area="glacier">Glacier</button>
+        <button class="chip" data-area="city">City subsidence</button>
+      </div>
+      <div class="explorer-toolbar" style="border-top:none;padding-top:0">
+        <span style="font-size:13px;color:var(--muted);margin-right:4px">Change</span>
+        <button class="chip active" data-change="flood">Flood</button>
+        <button class="chip" data-change="deform">Deformation</button>
+        <button class="chip" data-change="veg">Vegetation</button>
+        <button class="chip" data-change="ice">Ice</button>
+        <button class="chip" data-change="agri">Agriculture</button>
+        <span style="width:12px"></span>
+        <span style="font-size:13px;color:var(--muted);margin-right:4px">Band</span>
+        <button class="chip active" data-band="L">L-band</button>
+        <button class="chip" data-band="S">S-band</button>
+        <span style="width:12px"></span>
+        <select id="prodSelect" style="width:auto;min-width:160px">
+          <option value="grd">GRD / RTC intensity</option>
+          <option value="change">Change detection</option>
+          <option value="ifg">Interferogram</option>
+          <option value="offset">Pixel offset</option>
+        </select>
+      </div>
+
+      <div class="explorer-main">
+        <div class="viewer">
+          <canvas id="mainCanvas" width="960" height="600"></canvas>
+          <div class="viewer-badge" id="badge">L-band · GRD · Maine coast</div>
+        </div>
+        <div class="side-panel">
+          <h4>Key metrics</h4>
+          <div id="stats"></div>
+          <div class="hypo" id="hypo"></div>
+        </div>
+      </div>
+
+      <div class="play-row">
+        <button class="btn" id="playBtn">▶ Play</button>
+        <div class="track" id="track">
+          <div class="fill" id="fill" style="width:40%"></div>
+          <div class="knob" id="knob" style="left:40%"></div>
+        </div>
+        <span id="timeLabel" style="font-size:13px;font-weight:600;min-width:80px;color:var(--accent)">Day +12</span>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section id="hub" style="padding-top:30px">
+  <div class="section-inner">
+    <div class="section-head">
+      <h2>Knowledge Hub</h2>
+      <p>The problem, the solution, case studies, mission data and tools — switch tabs to explore.</p>
+    </div>
+    <div class="tabs" role="tablist" id="hubTabs">
+      <button class="tab active" role="tab" data-tab="problem">⚠️ Problem</button>
+      <button class="tab" role="tab" data-tab="solution">✅ Solution</button>
+      <button class="tab" role="tab" data-tab="cases">🖼️ Case studies</button>
+      <button class="tab" role="tab" data-tab="mission">🛰️ Mission data</button>
+      <button class="tab" role="tab" data-tab="bands">📡 L vs S band</button>
+      <button class="tab" role="tab" data-tab="products">🗂️ Data products</button>
+      <button class="tab" role="tab" data-tab="calc">🧮 Fringe calculator</button>
+      <button class="tab" role="tab" data-tab="faq">❓ FAQ</button>
+    </div>
+
+    <div class="tabpanel active" id="tab-problem">
+      <div class="two-col">
+        <div>
+          <h3 class="ph">Why is tracking surface change so hard?</h3>
+          <p class="lead">Earth's surface is always moving, flooding, growing and melting — but the tools most people use to watch it have blind spots.</p>
+          <div class="prob-list">
+            <div class="prob"><b>1</b><div><h4>Clouds and darkness block optical sensors</h4><p>Cameras on most satellites need sunlight and a clear sky. On average roughly two-thirds of Earth is cloud covered, so floods, storms and eruptions are often hidden exactly when they matter.</p></div></div>
+            <div class="prob"><b>2</b><div><h4>Centimetre-scale motion is invisible</h4><p>Slow ground sinking, volcano swelling or fault creep moves only millimetres to centimetres. Photos cannot show it; phase-based radar can.</p></div></div>
+            <div class="prob"><b>3</b><div><h4>Revisit gaps break the timeline</h4><p>Change needs a regular, repeatable record. Irregular passes make it hard to tell a flood from a season.</p></div></div>
+            <div class="prob"><b>4</b><div><h4>Radar data is hard to understand</h4><p>Complex SLC files, speckle, phase wrapping and HDF5 formats are a real barrier for students, planners and responders.</p></div></div>
+            <div class="prob"><b>5</b><div><h4>One wavelength does not fit all surfaces</h4><p>Dense forest, crops, ice and bare soil each respond differently to radar wavelength.</p></div></div>
+          </div>
+        </div>
+        <div class="side-card">
+          <h4>Who is affected?</h4>
+          <div class="kv"><span>Flood responders</span><b>Need extent in hours</b></div>
+          <div class="kv"><span>Farmers &amp; water managers</span><b>Need soil moisture</b></div>
+          <div class="kv"><span>Cities on soft ground</span><b>Need subsidence maps</b></div>
+          <div class="kv"><span>Volcano observatories</span><b>Need deformation</b></div>
+          <div class="kv"><span>Glaciologists</span><b>Need flow speed</b></div>
+          <div class="kv"><span>Forest managers</span><b>Need biomass change</b></div>
+          <canvas id="cvProblem" width="480" height="260" class="thumb"></canvas>
+          <p class="cap">Illustration: cloud cover hides the surface from optical cameras (left) while radar sees through (right).</p>
+        </div>
+      </div>
+    </div>
+
+    <div class="tabpanel" id="tab-solution">
+      <h3 class="ph">How NISAR radar and this explorer solve it</h3>
+      <p class="lead">Synthetic Aperture Radar supplies its own illumination and works through cloud, rain and night. Each problem maps to a specific capability.</p>
+      <div class="table-wrap">
+        <table class="dt">
+          <thead><tr><th>Problem</th><th>NISAR capability</th><th>In this explorer</th></tr></thead>
+          <tbody>
+            <tr><td>Clouds &amp; darkness</td><td>Active microwave radar, day and night, all weather</td><td>Flood scenes with a sharp dark water signature</td></tr>
+            <tr><td>Invisible cm motion</td><td>InSAR phase: one fringe = half a wavelength of motion</td><td>Interferogram product + fringe calculator</td></tr>
+            <tr><td>Revisit gaps</td><td>12-day exact repeat, left-looking global coverage</td><td>Playable time series (t0 → Day +30)</td></tr>
+            <tr><td>Hard-to-read data</td><td>Open, free data from ASF and Earthdata</td><td>Plain-language metrics and hypotheses per scene</td></tr>
+            <tr><td>Wavelength limits</td><td>Dual L-band + S-band in one mission</td><td>L / S band toggle and band comparison tab</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="features" style="margin-top:22px">
+        <div class="feature"><div class="icon">🌊</div><h3>Floods</h3><p>Open water is dark in radar. Compare a reference date with a new date to map extent.</p></div>
+        <div class="feature"><div class="icon">🌋</div><h3>Deformation</h3><p>Rainbow fringes reveal swelling, sinking and fault slip at centimetre precision.</p></div>
+        <div class="feature"><div class="icon">🌲</div><h3>Forests</h3><p>L-band penetrates canopy and responds to trunks and branches — a proxy for biomass.</p></div>
+        <div class="feature"><div class="icon">🧊</div><h3>Ice</h3><p>Pixel-offset tracking measures glacier flow, even where coherence is lost.</p></div>
+      </div>
+    </div>
+
+    <div class="tabpanel" id="tab-cases">
+      <h3 class="ph">Case studies</h3>
+      <p class="lead">Six stories, each with a simulated radar image, the physical driver and the best product. Images are generated illustrations, not real NISAR scenes.</p>
+      <div class="case-grid" id="caseGrid"></div>
+    </div>
+
+    <div class="tabpanel" id="tab-mission">
+      <h3 class="ph">NISAR mission data</h3>
+      <p class="lead">NASA–ISRO Synthetic Aperture Radar: the first mission with two radar frequencies, built jointly by NASA JPL and ISRO.</p>
+      <div class="stat-grid">
+        <div class="stat"><b>12 days</b><span>Exact repeat cycle</span></div>
+        <div class="stat"><b>~747 km</b><span>Orbit altitude</span></div>
+        <div class="stat"><b>&gt;240 km</b><span>Swath width (SweepSAR)</span></div>
+        <div class="stat"><b>~12 m</b><span>Deployable reflector</span></div>
+      </div>
+      <div class="table-wrap">
+        <table class="dt">
+          <thead><tr><th>Parameter</th><th>Value</th></tr></thead>
+          <tbody>
+            <tr><td>Partners</td><td>NASA (L-band radar, JPL) and ISRO (S-band radar, launch, bus)</td></tr>
+            <tr><td>Launch</td><td>30 July 2025, Satish Dhawan Space Centre, India (GSLV-F16)</td></tr>
+            <tr><td>Orbit</td><td>Near-polar, sun-synchronous, dawn–dusk</td></tr>
+            <tr><td>L-band</td><td>1.25 GHz centre · wavelength ~24 cm</td></tr>
+            <tr><td>S-band</td><td>3.2 GHz centre · wavelength ~9.4 cm</td></tr>
+            <tr><td>Technique</td><td>SweepSAR scanning for wide swath at high resolution</td></tr>
+            <tr><td>Coverage</td><td>Nearly all land and ice surfaces, roughly every 12 days</td></tr>
+            <tr><td>Data policy</td><td>Free and open</td></tr>
+            <tr><td>Science themes</td><td>Ecosystems, solid Earth, cryosphere, natural hazards, agriculture</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <p class="cap" style="margin-top:10px">Check the official NASA/JPL and ASF pages (see Documents) for the latest mission status and product availability.</p>
+    </div>
+
+    <div class="tabpanel" id="tab-bands">
+      <h3 class="ph">L-band vs S-band</h3>
+      <p class="lead">Longer wavelengths penetrate deeper; shorter ones are more sensitive to small features like leaves and surface roughness.</p>
+      <div class="table-wrap">
+        <table class="dt">
+          <thead><tr><th>Property</th><th>L-band (NASA)</th><th>S-band (ISRO)</th></tr></thead>
+          <tbody>
+            <tr><td>Frequency</td><td>1.25 GHz</td><td>3.2 GHz</td></tr>
+            <tr><td>Wavelength</td><td>~24 cm</td><td>~9.4 cm</td></tr>
+            <tr><td>One fringe =</td><td>~12 cm of motion</td><td>~4.7 cm of motion</td></tr>
+            <tr><td>Vegetation penetration</td><td>Deep: sees trunks and large branches</td><td>Shallower: sensitive to leaves and crops</td></tr>
+            <tr><td>Coherence over vegetation</td><td>Stays high longer</td><td>Decorrelates sooner</td></tr>
+            <tr><td>Best for</td><td>Forest biomass, ice, large deformation</td><td>Crop growth, soil moisture, fine roughness</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <canvas id="cvBands" width="900" height="200" class="wide"></canvas>
+      <p class="cap">Scaled sine waves: wavelength of L-band (top) is about 2.5× that of S-band (bottom).</p>
+    </div>
+
+    <div class="tabpanel" id="tab-products">
+      <h3 class="ph">NISAR data products</h3>
+      <p class="lead">Products are grouped in processing levels. Level-2 geocoded products are the easiest to start with.</p>
+      <div class="table-wrap">
+        <table class="dt">
+          <thead><tr><th>Level</th><th>Code</th><th>What it is</th><th>Use it for</th></tr></thead>
+          <tbody>
+            <tr><td>L1</td><td>RSLC</td><td>Range-Doppler single-look complex image</td><td>Custom InSAR processing</td></tr>
+            <tr><td>L1</td><td>RIFG / RUNW</td><td>Wrapped / unwrapped interferogram (radar geometry)</td><td>Deformation analysis</td></tr>
+            <tr><td>L1</td><td>ROFF</td><td>Pixel offsets in radar geometry</td><td>Large motion, ice flow</td></tr>
+            <tr><td>L2</td><td>GSLC</td><td>Geocoded single-look complex</td><td>Time-series InSAR</td></tr>
+            <tr><td>L2</td><td>GCOV</td><td>Geocoded polarimetric covariance (backscatter)</td><td>Floods, forests, crops</td></tr>
+            <tr><td>L2</td><td>GUNW</td><td>Geocoded unwrapped interferogram</td><td>Quick deformation maps</td></tr>
+            <tr><td>L2</td><td>GOFF</td><td>Geocoded pixel offsets</td><td>Glacier velocity, landslides</td></tr>
+            <tr><td>L3</td><td>Soil moisture</td><td>Derived soil moisture maps</td><td>Agriculture, drought</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="two-col" style="margin-top:22px">
+        <div class="side-card">
+          <h4>Tools to open the data</h4>
+          <div class="kv"><span>QGIS</span><b>Visualise GeoTIFF / HDF5</b></div>
+          <div class="kv"><span>Python</span><b>h5py, xarray, rasterio</b></div>
+          <div class="kv"><span>ISCE3</span><b>InSAR processing</b></div>
+          <div class="kv"><span>MintPy</span><b>Time-series analysis</b></div>
+          <div class="kv"><span>ASF HyP3</span><b>On-demand processing</b></div>
+        </div>
+        <div class="side-card">
+          <h4>Typical workflow</h4>
+          <ol class="steps">
+            <li>Pick area and dates in ASF Vertex</li>
+            <li>Download GCOV / GUNW granules</li>
+            <li>Open in QGIS or Python</li>
+            <li>Compare reference vs new date</li>
+            <li>Explain the physical driver</li>
+          </ol>
+        </div>
+      </div>
+    </div>
+
+    <div class="tabpanel" id="tab-calc">
+      <h3 class="ph">Interferogram fringe calculator</h3>
+      <p class="lead">Each fringe (full colour cycle) equals half a wavelength of line-of-sight motion. Drag the slider to see how many fringes each band records.</p>
+      <div class="calc">
+        <label for="calcSlider">Ground motion along line of sight: <b id="calcVal" style="color:var(--accent)">6 cm</b></label>
+        <input type="range" id="calcSlider" min="0" max="60" step="0.5" value="6">
+        <div class="stat-grid" style="margin-top:16px">
+          <div class="stat"><b id="fL">0.5</b><span>L-band fringes</span></div>
+          <div class="stat"><b id="fS">1.3</b><span>S-band fringes</span></div>
+          <div class="stat"><b id="phL">—</b><span>L-band phase</span></div>
+          <div class="stat"><b id="phS">—</b><span>S-band phase</span></div>
+        </div>
+        <canvas id="cvCalc" width="900" height="120" class="wide"></canvas>
+        <p class="cap">Formula: fringes = 2 × displacement ÷ wavelength. Top bar L-band, bottom bar S-band.</p>
+      </div>
+    </div>
+
+    <div class="tabpanel" id="tab-glossary">
+      <h3 class="ph">Radar glossary</h3>
+      <p class="lead">Plain-language definitions of the terms you will meet when working with NISAR data.</p>
+      <div class="table-wrap">
+        <table class="dt">
+          <thead><tr><th>Term</th><th>Meaning</th></tr></thead>
+          <tbody>
+            <tr><td>SAR</td><td>Synthetic Aperture Radar: moving radar that combines many pulses to act like a very large antenna and give fine resolution.</td></tr>
+            <tr><td>Backscatter</td><td>The fraction of radar energy that returns to the antenna. Bright = strong return, dark = weak return.</td></tr>
+            <tr><td>Speckle</td><td>Grainy noise from random interference of scatterers inside one pixel.</td></tr>
+            <tr><td>Multilooking</td><td>Averaging neighbouring pixels to reduce speckle at the cost of resolution.</td></tr>
+            <tr><td>InSAR</td><td>Interferometric SAR: comparing the phase of two images to measure distance change.</td></tr>
+            <tr><td>Fringe</td><td>One full colour cycle in an interferogram, equal to half a wavelength of line-of-sight motion.</td></tr>
+            <tr><td>Coherence</td><td>A 0 to 1 measure of how similar two radar images are. Low coherence means unreliable phase.</td></tr>
+            <tr><td>Phase unwrapping</td><td>Turning repeating 0 to 360 degree phase into continuous motion values.</td></tr>
+            <tr><td>LOS</td><td>Line of sight: the direction from the ground to the satellite. InSAR only measures motion along it.</td></tr>
+            <tr><td>Polarization</td><td>Orientation of the radar wave, for example HH or HV. Different polarizations highlight different surfaces.</td></tr>
+            <tr><td>Geocoding</td><td>Placing radar pixels onto map coordinates so they overlay with other data.</td></tr>
+            <tr><td>SweepSAR</td><td>NISAR scanning technique that widens the swath without losing resolution.</td></tr>
+            <tr><td>Offset tracking</td><td>Following surface texture between two images to measure large motion such as glacier flow.</td></tr>
+            <tr><td>Dielectric constant</td><td>How strongly a material interacts with radar. Wet soil has a high value and returns more energy.</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <div class="tabpanel" id="tab-faq">
+      <h3 class="ph">Frequently asked questions</h3>
+      <details class="faq" open><summary>Is the explorer using real NISAR data?</summary><p>No. The scenes are simulations built from NISAR radar physics so the app runs offline. The Data tab explains how to swap in real granules from ASF Vertex or Earthdata Search.</p></details>
+      <details class="faq"><summary>Why does water look dark in radar?</summary><p>Calm water reflects the radar beam away from the satellite like a mirror, so very little energy returns. Rough land and buildings scatter energy back and look brighter.</p></details>
+      <details class="faq"><summary>What is an interferogram?</summary><p>It compares the phase of two radar images taken on different dates. A change in distance between satellite and ground shifts the phase, producing colour fringes.</p></details>
+      <details class="faq"><summary>What is speckle?</summary><p>Grainy noise created when many scatterers inside one pixel add up randomly. Averaging (multilooking) reduces it.</p></details>
+      <details class="faq"><summary>Why two radar bands?</summary><p>L-band penetrates vegetation and stays coherent; S-band is more sensitive to leaves, crops and soil surface. Together they describe both structure and surface.</p></details>
+      <details class="faq"><summary>How often does NISAR see the same place?</summary><p>Every 12 days on an exact-repeat orbit, with ascending and descending passes improving revisit.</p></details>
+    </div>
+  </div>
+</section>
+
+<section id="docs" style="background:#0a101c">
+  <div class="section-inner">
+    <div class="section-head">
+      <h2>Project Documents</h2>
+      <p>Official resources and portals for the Space Apps submission and for extending this explorer with real NISAR data.</p>
+    </div>
+    <div class="docs-grid">
+      <div class="doc-card">
+        <div class="doc-preview">📘</div>
+        <div class="doc-body">
+          <h3>Challenge Statement</h3>
+          <div class="meta">Official · Space Apps 2026</div>
+          <p>Dancing with the SARs — build an interactive app using NISAR radar to track surface change.</p>
+          <a class="btn" href="https://www.spaceappschallenge.org/2026/challenges/dancing-with-the-sars/" target="_blank" rel="noopener">Open ↗</a>
+        </div>
+      </div>
+      <div class="doc-card">
+        <div class="doc-preview">📡</div>
+        <div class="doc-body">
+          <h3>NISAR Data User Guide</h3>
+          <div class="meta">ASF · Documentation</div>
+          <p>Product levels, formats, GSLC, GUNW, GOFF, RTC and soil moisture.</p>
+          <a class="btn" href="https://nisar-docs.asf.alaska.edu/" target="_blank" rel="noopener">Open ↗</a>
+        </div>
+      </div>
+      <div class="doc-card">
+        <div class="doc-preview">🛰️</div>
+        <div class="doc-body">
+          <h3>ASF Vertex</h3>
+          <div class="meta">Data portal</div>
+          <p>Search and download NISAR granules by area, date and product type.</p>
+          <a class="btn" href="https://search.asf.alaska.edu/" target="_blank" rel="noopener">Open ↗</a>
+        </div>
+      </div>
+      <div class="doc-card">
+        <div class="doc-preview">🌍</div>
+        <div class="doc-body">
+          <h3>Earthdata Search</h3>
+          <div class="meta">NASA · CMR</div>
+          <p>Discover NISAR collections and related Earth observation datasets.</p>
+          <a class="btn" href="https://search.earthdata.nasa.gov/search?q=NISAR" target="_blank" rel="noopener">Open ↗</a>
+        </div>
+      </div>
+      <div class="doc-card">
+        <div class="doc-preview">🖼️</div>
+        <div class="doc-body">
+          <h3>First Radar Images</h3>
+          <div class="meta">NASA JPL</div>
+          <p>Official release of the first NISAR L-band images (Maine & North Dakota).</p>
+          <a class="btn" href="https://www.jpl.nasa.gov/news/nasa-isro-satellite-sends-first-radar-images-of-earths-surface/" target="_blank" rel="noopener">Open ↗</a>
+        </div>
+      </div>
+      <div class="doc-card">
+        <div class="doc-preview">📋</div>
+        <div class="doc-body">
+          <h3>Mission Quick Facts</h3>
+          <div class="meta">NASA / JPL</div>
+          <p>Orbit, swath, bands, partners and science objectives.</p>
+          <a class="btn" href="https://science.nasa.gov/mission/nisar/" target="_blank" rel="noopener">Open ↗</a>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+
+<section id="maplab">
+ <div class="section-inner">
+  <div class="section-head"><h2>🌍 Geographic Mission Lab</h2><p>Choose a demonstration region to load a scenario. Pins are illustrative study areas—not live NISAR footprints.</p></div>
+  <div class="upgrade-grid">
+   <div class="panelx">
+    <div class="mapbox">
+     <svg viewBox="0 0 800 390" role="img" aria-label="Stylized world map with selectable demonstration regions">
+      <defs><pattern id="gr" width="24" height="24" patternUnits="userSpaceOnUse"><path d="M24 0H0V24" fill="none" stroke="#20334a" stroke-width="1"/></pattern></defs>
+      <rect width="800" height="390" fill="url(#gr)"/>
+      <g fill="#203b50" stroke="#426078" stroke-width="1.5" opacity=".95">
+       <path d="M70 95L120 48 205 40 250 75 230 112 190 130 170 180 130 195 105 155 75 145Z"/>
+       <path d="M190 190L230 205 250 260 230 330 205 355 180 290 165 235Z"/>
+       <path d="M350 70L410 45 470 60 510 90 485 120 440 125 415 155 380 135 355 105Z"/>
+       <path d="M405 160L455 170 480 220 455 290 420 330 390 260 380 205Z"/>
+       <path d="M500 85L590 45 700 70 750 115 710 150 650 145 610 175 560 150 520 130Z"/>
+       <path d="M640 205L710 190 760 230 735 285 680 300 650 260Z"/>
+       <path d="M300 35L330 25 350 45 330 60Z"/>
+      </g>
+      <g id="mapPins">
+       <circle class="mapdot active" data-region="flood" cx="180" cy="145" r="8" fill="#22d3ee"/><text class="maplabel" x="193" y="140">Floodplain</text>
+       <circle class="mapdot" data-region="quake" cx="430" cy="115" r="8" fill="#22d3ee"/><text class="maplabel" x="443" y="110">Deformation</text>
+       <circle class="mapdot" data-region="delta" cx="560" cy="155" r="8" fill="#22d3ee"/><text class="maplabel" x="573" y="150">Delta</text>
+       <circle class="mapdot" data-region="ice" cx="650" cy="70" r="8" fill="#22d3ee"/><text class="maplabel" x="663" y="65">Ice</text>
+       <circle class="mapdot" data-region="city" cx="220" cy="230" r="8" fill="#22d3ee"/><text class="maplabel" x="233" y="225">Urban</text>
+      </g>
+     </svg>
+    </div>
+    <div class="mapinfo"><strong id="regionTitle">Floodplain scenario</strong><p id="regionDesc" class="smallx">Water expansion can reduce radar backscatter over smooth open water while flooded vegetation may remain bright.</p></div>
+   </div>
+   <div class="panelx">
+    <h3>Scenario details</h3><p id="regionMethod">Suggested product: calibrated intensity / RTC, with optical or gauge context.</p>
+    <div class="metric-row"><div class="metricx"><strong id="regionProduct">GRD/RTC</strong><span>Product</span></div><div class="metricx"><strong id="regionBand">L-band</strong><span>Band focus</span></div><div class="metricx"><strong>12 days</strong><span>Repeat cycle</span></div></div>
+    <p class="smallx" style="margin-top:14px">This panel selects a teaching scenario. It does not claim that a current satellite acquisition exists at the pin.</p>
+    <a class="btn ghost" href="#explore" style="margin-top:12px">Open simulation explorer →</a>
+   </div>
+  </div>
+ </div>
+</section>
+
+<section id="compare">
+ <div class="section-inner">
+  <div class="section-head"><h2>🌓 Before / After Radar Comparator</h2><p>Practice interpreting a change scene. The two panels are synthetic examples; use real co-registered products for scientific measurements.</p></div>
+  <div class="upgrade-grid">
+   <div class="panelx">
+    <div class="compare-wrap"><canvas id="cmpAfter" width="900" height="480"></canvas><div class="compare-overlay" id="cmpOverlay"><canvas id="cmpBefore" width="900" height="480"></canvas></div></div>
+    <label class="smallx" for="cmpRange">Drag to reveal the before scene</label><input class="compare-range" id="cmpRange" type="range" min="0" max="100" value="50"/>
+    <div style="display:flex;justify-content:space-between" class="smallx"><span>← Before</span><span>After →</span></div>
+   </div>
+   <div class="panelx"><h3>Interpretation guide</h3><p id="cmpExplain">A simulated flood changes the backscatter texture in the highlighted area. A real workflow compares calibrated, aligned scenes and checks context.</p>
+    <div class="metric-row"><div class="metricx"><strong>Δσ⁰</strong><span>Backscatter change</span></div><div class="metricx"><strong>Δcoh</strong><span>Coherence change</span></div><div class="metricx"><strong>QA</strong><span>Quality checks</span></div></div>
+    <p class="smallx" style="margin-top:12px">Do not interpret the illustrative values as measurements of a real event.</p></div>
+  </div>
+ </div>
+</section>
+
+<section id="quality">
+ <div class="section-inner">
+  <div class="section-head"><h2>🧪 Confidence & Quality Check</h2><p>Explain why a change map may be reliable—or misleading—before making a claim.</p></div>
+  <div class="upgrade-grid">
+   <div class="panelx">
+    <h3>Set the scene conditions</h3>
+    <label class="smallx" for="qPair">Temporal pair</label><select id="qPair" style="width:100%;margin:5px 0 14px"><option value="good">Short interval, same geometry</option><option value="long">Long interval / seasonal gap</option><option value="geom">Different viewing geometry</option></select>
+    <label class="smallx" for="qSurface">Surface / coherence</label><select id="qSurface" style="width:100%;margin:5px 0 14px"><option value="stable">Stable bare ground / built-up</option><option value="veg">Dense or changing vegetation</option><option value="water">Open water / rapidly changing surface</option></select>
+    <label class="smallx" for="qAtmos">Atmospheric / processing checks</label><select id="qAtmos" style="width:100%;margin:5px 0 14px"><option value="checked">Checked and corrected where possible</option><option value="partial">Partially checked</option><option value="none">Not checked</option></select>
+    <button class="btn" id="qRun">Evaluate quality considerations</button>
+   </div>
+   <div class="panelx"><h3 id="qTitle">Moderate confidence (illustrative)</h3><div class="confidence-bar"><span id="qBar"></span></div><p id="qText" class="smallx">A quick checklist score—not a scientific probability or product validation.</p><ul id="qList" class="smallx" style="padding-left:18px;margin-top:12px"></ul></div>
+  </div>
+  <p class="smallx" style="text-align:center;margin-top:16px">This heuristic is educational only. A defensible result requires product-specific QA, uncertainty analysis, ground/context data and expert review.</p>
+ </div>
+</section>
+
+<section id="data">
+  <div class="section-inner">
+    <div class="section-head">
+      <h2>From simulation to real NISAR data</h2>
+      <p>Prototype here, then replace the scenes with actual granules for your official submission.</p>
+    </div>
+    <div class="features">
+      <div class="feature">
+        <div class="icon">1</div>
+        <h3>Pick area & process</h3>
+        <p>Choose a study area and one or more change types (flood, deformation, vegetation, ice, agriculture).</p>
+      </div>
+      <div class="feature">
+        <div class="icon">2</div>
+        <h3>Download NISAR products</h3>
+        <p>ASF Vertex or Earthdata Search → filter by date, product and polarization.</p>
+      </div>
+      <div class="feature">
+        <div class="icon">3</div>
+        <h3>Visualize & tell the story</h3>
+        <p>Load into QGIS / SNAP / HyP3 / Python, add context, and write the physical drivers.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section id="about" style="background:#0a101c">
+  <div class="section-inner">
+    <div class="section-head">
+      <h2>About this project</h2>
+      <p>Built for the 2026 NASA Space Apps Challenge “Dancing with the SARs”.</p>
+    </div>
+    <div style="max-width:600px;margin:0 auto;color:var(--muted);font-size:15px;text-align:center">
+      <p style="margin-bottom:14px">This single-page application demonstrates interactive surface-change tracking with NISAR-style dual-band radar physics. It includes study areas based on the first NISAR images, multiple product types, time-series playback, and clear pathways to real open data.</p>
+      <p>Open source · runs offline · designed so teams can extend it with real granules.</p>
+    </div>
+  </div>
+</section>
+
+
+<section id="team">
+  <div class="section-inner">
+    <div class="section-head">
+      <h2>Meet the team</h2>
+      <p>The four people behind Orbit Operators and this NISAR Explorer.</p>
+    </div>
+    <div class="team-grid">
+      <div class="member"><div class="avatar" aria-hidden="true">KS</div><h3>Kavach Shastri</h3><span class="role">Mission Lead</span><p>Guides the project, sets priorities and keeps the team on schedule.</p></div>
+      <div class="member"><div class="avatar" aria-hidden="true">AS</div><h3>Adhyatm Shastri</h3><span class="role">Radar Analyst</span><p>Interprets NISAR radar signals, bands and interferograms.</p></div>
+      <div class="member"><div class="avatar" aria-hidden="true">HS</div><h3>Harsh Sahu</h3><span class="role">Data Explorer</span><p>Finds, prepares and checks the data behind each scene.</p></div>
+      <div class="member"><div class="avatar" aria-hidden="true">HV</div><h3>Harsh Vishwkarma</h3><span class="role">System Visual</span><p>Designs the visuals and look of the application.</p></div>
+    </div>
+  </div>
+</section>
+
+<section id="stack">
+ <div class="section-inner">
+  <div class="section-head"><h2>Technology Stack</h2><p>What powers the prototype today—and what to use when connecting it to authentic NISAR products.</p></div>
+  <div class="features">
+   <div class="feature"><div class="icon">🧱</div><h3>Frontend</h3><p><b>HTML5 + CSS3 + Vanilla JavaScript</b><br>Responsive layout, navigation, controls, canvas rendering and client-side simulation. No build step or framework required.</p></div>
+   <div class="feature"><div class="icon">🎨</div><h3>Visualization</h3><p><b>Canvas 2D + custom JS</b><br>Procedural radar-like scenes, animated time slider, band comparisons and fringe visualizations. These are illustrative simulations, not measured pixels.</p></div>
+   <div class="feature"><div class="icon">🛰️</div><h3>Mission data layer</h3><p><b>NISAR L1/L2/L3 products (future/live integration)</b><br>RSLC, GUNW, GCOV, GOFF and SME2; data access via ASF DAAC/Vertex and ISRO Bhoonidhi.</p></div>
+   <div class="feature"><div class="icon">🐍</div><h3>Scientific processing</h3><p><b>Python: NumPy, xarray, h5py, rasterio</b><br>Read arrays/HDF5, raster operations, analysis and map preparation. <b>ISCE3</b> for SAR/InSAR processing; <b>MintPy</b> for time-series deformation.</p></div>
+   <div class="feature"><div class="icon">🗺️</div><h3>GIS & mapping</h3><p><b>QGIS + GeoTIFF / geocoded layers</b><br>Inspect, style and overlay NISAR outputs with boundaries, roads, elevation and exposure layers.</p></div>
+   <div class="feature"><div class="icon">☁️</div><h3>Data delivery (planned)</h3><p><b>ASF cloud access / Earthdata APIs</b><br>Catalog search, granule selection, authenticated download or cloud workflows. Backend/API integration is not currently implemented in this standalone HTML prototype.</p></div>
+  </div>
+  <div class="side-card" style="margin-top:20px"><h4>Architecture</h4><p style="color:var(--muted)">Browser UI → scenario controls → simulation renderer (current) / NISAR granule loader (planned) → scientific processing (ISCE3/Python) → geocoded layers → map &amp; metrics.</p></div>
+ </div>
+</section>
+
+<section id="challenges">
+ <div class="section-inner">
+  <div class="section-head"><h2>More Challenges → Practical Solutions</h2><p>Risks that matter when turning radar observations into decisions. Radar is powerful, but it is not a magic answer.</p></div>
+  <div class="table-wrap"><table class="dt"><thead><tr><th>Challenge</th><th>Why it matters</th><th>Solution / mitigation</th><th>Product or method</th></tr></thead><tbody>
+  <tr><td>Layover &amp; shadow</td><td>Steep terrain distorts or hides slopes in side-looking SAR.</td><td>Use terrain correction, DEM-assisted interpretation and complementary ascending/descending views; flag shadow/layover.</td><td>RTC, DEM, geometry masks</td></tr>
+  <tr><td>Temporal / spatial decorrelation</td><td>Vegetation, snow or rapid change can destroy interferometric phase reliability.</td><td>Use coherence masks, shorter temporal baselines where available, multi-date analysis; switch to amplitude/offset tracking for large motion.</td><td>RSLC, RIFG/GUNW, GOFF</td></tr>
+  <tr><td>Atmospheric delay</td><td>Water vapour can mimic broad deformation signals.</td><td>Compare multiple interferograms, inspect spatial patterns, use weather/context data and time-series methods; report uncertainty.</td><td>InSAR time series / MintPy</td></tr>
+  <tr><td>Flood ambiguity</td><td>Dark returns can also mean smooth surfaces; urban double-bounce may be bright.</td><td>Combine pre/post SAR, thresholding, terrain/land-cover context and field/optical validation; distinguish permanent water from new inundation.</td><td>GCOV / RTC + change map</td></tr>
+  <tr><td>Vegetation &amp; soil moisture confounding</td><td>Backscatter varies with structure, moisture, incidence and season.</td><td>Use calibrated multi-date comparisons, dual-band/polarization/context and avoid treating brightness as a direct biomass or moisture measurement.</td><td>GCOV, polarimetry, SME2</td></tr>
+  <tr><td>Geolocation &amp; alignment</td><td>Misregistered layers create false change boundaries.</td><td>Check CRS, geocoding, DEM and co-registration; use consistent grids and quality flags.</td><td>GSLC/GCOV + GIS QA</td></tr>
+  <tr><td>Data volume &amp; latency</td><td>Large HDF5 granules and processing can delay local workflows.</td><td>Filter by AOI/date/product, use cloud or chunked reads, cache derived tiles and show processing status.</td><td>ASF search + Python/cloud</td></tr>
+  <tr><td>Uncertainty &amp; false alarms</td><td>Simulated or noisy maps may be mistaken for definitive alerts.</td><td>Display confidence/quality layers, thresholds, source date and validation status; require human review for response decisions.</td><td>QA masks + validation</td></tr>
+  </tbody></table></div>
+  <div class="features" style="margin-top:20px"><div class="feature"><h3>Prototype limitation</h3><p>This site currently generates synthetic scenes in Canvas. It does not ingest live satellite granules or produce operational flood/deformation alerts.</p></div><div class="feature"><h3>Next build milestone</h3><p>Connect one real GCOV or GUNW sample → parse metadata → render georeferenced raster → compare dates → add legend, quality mask and citations for each scene.</p></div></div>
+ </div>
+</section>
+
+<section id="sources">
+ <div class="section-inner">
+  <div class="section-head"><h2>Sources &amp; References</h2><p>Official mission and data documentation used to ground the technical facts and proposed workflow.</p></div>
+  <div class="docs-grid">
+   <div class="doc-card"><div class="doc-preview">🚀</div><div class="doc-body"><h3>NASA NISAR Mission</h3><div class="meta">Mission facts, science, data availability</div><p>Launch, L/S wavelengths, objectives and openly archived data.</p><a class="btn" href="https://science.nasa.gov/mission/nisar/" target="_blank" rel="noopener">NASA Science ↗</a></div></div>
+   <div class="doc-card"><div class="doc-preview">🇮🇳</div><div class="doc-body"><h3>ISRO NISAR Mission</h3><div class="meta">Mission partnership &amp; instrument details</div><p>Dual-band mission, SweepSAR, orbit and applications.</p><a class="btn" href="https://www.isro.gov.in/ISRO_EN/Mission_GSLVF16_NISAR_Home.html" target="_blank" rel="noopener">ISRO ↗</a></div></div>
+   <div class="doc-card"><div class="doc-preview">📚</div><div class="doc-body"><h3>ASF NISAR User Guide</h3><div class="meta">Products, processing &amp; access</div><p>Official product definitions, use cases, software and data availability.</p><a class="btn" href="https://nisar-docs.asf.alaska.edu/" target="_blank" rel="noopener">ASF Docs ↗</a></div></div>
+   <div class="doc-card"><div class="doc-preview">🗂️</div><div class="doc-body"><h3>ASF Data Search</h3><div class="meta">L-band data portal</div><p>Search NISAR scenes by location, time and product.</p><a class="btn" href="https://search.asf.alaska.edu/" target="_blank" rel="noopener">Vertex ↗</a></div></div>
+   <div class="doc-card"><div class="doc-preview">🛰️</div><div class="doc-body"><h3>NASA/JPL Mission Overview</h3><div class="meta">Instrument &amp; spacecraft</div><p>Mission system, antenna, radar and science background.</p><a class="btn" href="https://www.jpl.nasa.gov/missions/nasa-isro-synthetic-aperture-radar-nisar/" target="_blank" rel="noopener">JPL ↗</a></div></div>
+   <div class="doc-card"><div class="doc-preview">🧪</div><div class="doc-body"><h3>ISCE3</h3><div class="meta">Open-source SAR processing</div><p>ASF describes ISCE3 as the processing software used for NISAR products and available for user workflows.</p><a class="btn" href="https://github.com/isce-framework/isce3" target="_blank" rel="noopener">GitHub ↗</a></div></div>
+  </div>
+  <p class="cap" style="margin-top:16px">Source note: mission specifications and product descriptions are source-based; technology-stack mapping and challenge mitigations are implementation recommendations. Simulator visuals and values are illustrative unless explicitly linked to a real granule.</p>
+ </div>
+</section>
+
+<footer>
+  <p>Dancing with the SARs · NISAR Surface Change Explorer · 2026 NASA Space Apps Challenge</p>
+  <p style="margin-top:8px">Simulations follow NISAR L/S-band physics · <a href="https://search.asf.alaska.edu/" target="_blank" rel="noopener">Get real data at ASF Vertex</a></p>
+</footer>
+
+<script>
+(function () {
+  const $ = (s, r=document) => r.querySelector(s);
+  const $$ = (s, r=document) => Array.from((r||document).querySelectorAll(s));
+
+  const links = $$(".nav-links a");
+  function setActive() {
+    const hash = location.hash || "#home";
+    links.forEach(a => a.classList.toggle("active", a.getAttribute("href") === hash));
+  }
+  window.addEventListener("hashchange", setActive);
+  setActive();
+
+  let state = { area: "maine", change: "flood", band: "L", product: "grd", time: 2 };
+  let playing = false, timer = null;
+
+  const CHANGES = {
+    flood: {
+      stats: t => [["Inundated area",(10+t*9).toFixed(0)+"%"],["Water-level rise",(t*0.45).toFixed(1)+" m"],["Trend",t>2?"Expanding":"Stable"],["Coherence",(0.7+t*0.04).toFixed(2)]],
+      hypo: "Open water is dark in SAR (specular reflection). Flooded areas show a sharp backscatter drop. L-band penetrates light vegetation better than S-band. Drivers: rainfall, river stage, storm surge."
+    },
+    deform: {
+      stats: t => [["Peak LOS motion",(t*1.9).toFixed(1)+" cm"],["Fringes (L-band)",(t*0.95).toFixed(1)],["Status",t>1?"Active":"Quiet"],["Mean coherence",(0.85-t*0.03).toFixed(2)]],
+      hypo: "Interferometric phase measures cm-scale line-of-sight motion. One colour cycle = λ/2. NISAR L-band stays coherent longer over vegetation. Drivers: magma, fault slip, groundwater extraction."
+    },
+    veg: {
+      stats: t => [["Canopy disturbance",(t*7).toFixed(0)+"%"],["Trend",t>2?"Loss":"Stable"],["Best band","L-band"],["Volume scatter Δ",(0.6+t*0.04).toFixed(2)]],
+      hypo: "L-band senses trunks and large branches; S-band is more leaf-sensitive. Drop in volume scattering indicates deforestation or fire."
+    },
+    ice: {
+      stats: t => [["Flow speed",(35+t*28).toFixed(0)+" m/yr"],["Terminus change",(t*14).toFixed(0)+" m"],["Best product","Offset tracking"],["Feature match",(0.55+t*0.02).toFixed(2)]],
+      hypo: "Glacier flow via interferometry or pixel-offset tracking. NISAR’s 12-day repeat yields frequent velocity maps."
+    },
+    agri: {
+      stats: t => [["Soil moisture",(0.14+t*0.07).toFixed(2)],["Crop stage",t%2===0?"Growing":"Harvest"],["Best bands","S + L"],["Backscatter Δ",(0.4+t*0.08).toFixed(2)]],
+      hypo: "Higher soil moisture raises dielectric constant and backscatter. Crop growth increases volume scattering. Centre-pivot circles are classic radar features."
+    }
+  };
+
+  function hash(s){let h=2166136261;for(let i=0;i<s.length;i++){h^=s.charCodeAt(i);h=Math.imul(h,16777619);}return h>>>0;}
+  function mulberry32(a){return function(){let t=a+=0x6D2B79F5;t=Math.imul(t^t>>>15,t|1);t^=t+Math.imul(t^t>>>7,t|61);return((t^t>>>14)>>>0)/4294967296;};}
+  function hslToRgb(h,s,l){const a=s*Math.min(l,1-l);const f=n=>{const k=(n+h/30)%12;return l-a*Math.max(-1,Math.min(k-3,9-k,1));};return[f(0)*255,f(8)*255,f(4)*255];}
+
+  $$("[data-area]").forEach(b=>b.addEventListener("click",()=>{$$("[data-area]").forEach(x=>x.classList.remove("active"));b.classList.add("active");state.area=b.dataset.area;render();}));
+  $$("[data-change]").forEach(b=>b.addEventListener("click",()=>{$$("[data-change]").forEach(x=>x.classList.remove("active"));b.classList.add("active");state.change=b.dataset.change;render();}));
+  $$("[data-band]").forEach(b=>b.addEventListener("click",()=>{$$("[data-band]").forEach(x=>x.classList.remove("active"));b.classList.add("active");state.band=b.dataset.band;render();}));
+  $("#prodSelect").addEventListener("change",()=>{state.product=$("#prodSelect").value;render();});
+
+  function updatePlayUI(){
+    const pct=(state.time/5)*100;
+    $("#fill").style.width=pct+"%";$("#knob").style.left=pct+"%";
+    const labels=["t0 Reference","Day +6","Day +12","Day +18","Day +24","Day +30"];
+    $("#timeLabel").textContent=labels[state.time];
+  }
+  $("#playBtn").addEventListener("click",()=>{
+    playing=!playing;
+    $("#playBtn").textContent=playing?"⏸ Pause":"▶ Play";
+    if(playing)timer=setInterval(()=>{state.time=(state.time+1)%6;render();},900);
+    else clearInterval(timer);
+  });
+  $("#track").addEventListener("click",e=>{
+    const r=e.currentTarget.getBoundingClientRect();
+    state.time=Math.round(Math.max(0,Math.min(1,(e.clientX-r.left)/r.width))*5);
+    render();
+  });
+
+  function render(){
+    const c=$("#mainCanvas"),g=c.getContext("2d"),W=c.width,H=c.height,t=state.time;
+    const rnd=mulberry32(hash(state.area+state.change+state.band+state.product+t));
+    g.fillStyle="#060a12";g.fillRect(0,0,W,H);
+    if(state.product==="ifg")drawIfg(g,W,H,t,state.band);
+    else if(state.product==="offset")drawOffset(g,W,H,t,rnd);
+    else if(state.product==="change")drawChange(g,W,H,t,rnd);
+    else drawIntensity(g,W,H,t,state.area,state.change,state.band,rnd);
+    if(state.product==="grd"||state.product==="change"){
+      const img=g.getImageData(0,0,W,H),d=img.data;
+      for(let i=0;i<d.length;i+=4){const s=1+(rnd()-0.5)*0.3;d[i]=Math.min(255,d[i]*s);d[i+1]=Math.min(255,d[i+1]*s);d[i+2]=Math.min(255,d[i+2]*s);}
+      g.putImageData(img,0,0);
+    }
+    const grd=g.createRadialGradient(W/2,H/2,H*0.25,W/2,H/2,H*0.7);
+    grd.addColorStop(0,"rgba(0,0,0,0)");grd.addColorStop(1,"rgba(0,0,0,0.4)");
+    g.fillStyle=grd;g.fillRect(0,0,W,H);
+    const areaNames={maine:"Maine coast",nd:"N. Dakota farms",delta:"Wetland delta",volcano:"Volcano",glacier:"Glacier",city:"City subsidence"};
+    const prodNames={grd:"GRD / RTC",change:"Change map",ifg:"Interferogram",offset:"Pixel offset"};
+    $("#badge").textContent=state.band+"-band · "+prodNames[state.product]+" · "+areaNames[state.area];
+    const ch=CHANGES[state.change];
+    $("#stats").innerHTML=ch.stats(t).map(([l,v])=>`<div class="stat-row"><span>${l}</span><b>${v}</b></div>`).join("");
+    $("#hypo").textContent=ch.hypo;
+    updatePlayUI();
+  }
+
+  function drawIntensity(g,W,H,t,area,change,band,rnd){
+    g.fillStyle="#1a3a2a";g.fillRect(0,0,W,H);
+    for(let i=0;i<1200;i++){g.fillStyle=rnd()>0.5?"#2a5a3a":"#1e4a30";g.beginPath();g.arc(rnd()*W,rnd()*H,3+rnd()*14,0,7);g.fill();}
+    if(area==="maine"||area==="delta"||change==="flood"){
+      g.fillStyle="#0a1020";g.beginPath();g.moveTo(0,H*0.58);g.bezierCurveTo(W*0.3,H*0.4,W*0.7,H*0.7,W,H*0.5);g.lineTo(W,H);g.lineTo(0,H);g.closePath();g.fill();
+      for(let i=0;i<8;i++){g.fillStyle="#2f9a62";g.beginPath();g.ellipse(80+rnd()*(W-160),50+rnd()*H*0.4,30+rnd()*50,20+rnd()*30,rnd(),0,7);g.fill();}
+      g.fillStyle="#c0399f";g.fillRect(W*0.68,H*0.22,70,45);
+    }
+    if(area==="nd"||change==="agri"){
+      const cols=["#8fc24a","#3f6f2c","#a9d05a","#4c7f33","#789e3a"];
+      for(let r=0;r<6;r++)for(let q=0;q<8;q++){g.fillStyle=cols[(r+q+t)%5];g.fillRect(q*(W/8)+2,r*(H/6)+2,W/8-4,H/6-4);}
+      [[0.2,0.3],[0.55,0.55],[0.8,0.25]].forEach(([fx,fy])=>{const cx=fx*W,cy=fy*H,rad=40+rnd()*20;g.fillStyle="#c6e47a";g.beginPath();g.arc(cx,cy,rad,0,7);g.fill();g.strokeStyle="#456f2d";g.lineWidth=2;g.beginPath();g.moveTo(cx,cy);g.lineTo(cx+rad,cy);g.stroke();});
+    }
+    if(change==="flood"&&t>0){g.fillStyle="rgba(8,14,28,0.8)";const y=H*(0.7-t*0.07);g.beginPath();g.moveTo(0,y);g.bezierCurveTo(W*0.4,y-30,W*0.7,y+40,W,y-10);g.lineTo(W,H);g.lineTo(0,H);g.closePath();g.fill();}
+    if(change==="veg"&&t>1){for(let i=0;i<t*3;i++){g.fillStyle="#5a2a42";g.beginPath();g.ellipse(rnd()*W,rnd()*H*0.5,25+rnd()*40,15+rnd()*25,0,0,7);g.fill();}}
+    if(area==="glacier"||change==="ice"){g.fillStyle="#c8d8e8";g.beginPath();g.moveTo(W*0.3,0);g.lineTo(W*0.7,0);g.lineTo(W*0.55,H*0.65);g.lineTo(W*0.45,H*0.65);g.closePath();g.fill();g.fillStyle="#0a1020";g.fillRect(0,H*0.65+t*8,W,H);}
+    if(area==="volcano"||area==="city"||change==="deform"){const cx=W/2,cy=H*0.4;for(let r=180;r>20;r-=20){g.strokeStyle=`rgba(34,211,238,${0.05+(180-r)/800})`;g.lineWidth=2;g.beginPath();g.arc(cx,cy,r,0,7);g.stroke();}}
+    if(band==="S"){g.fillStyle="rgba(15,35,28,0.15)";g.fillRect(0,0,W,H);}
+  }
+  function drawIfg(g,W,H,t,band){
+    const lam=band==="L"?24:9.4,peak=t*2.3,img=g.createImageData(W,H),sig=Math.min(W,H)*0.22,cx=W/2,cy=H/2;
+    for(let y=0;y<H;y++)for(let x=0;x<W;x++){const dx=x-cx,dy=y-cy,d=peak*Math.exp(-(dx*dx+dy*dy)/(2*sig*sig));let ph=(4*Math.PI*d/lam)%(2*Math.PI);if(ph<0)ph+=2*Math.PI;const rgb=hslToRgb(ph/(2*Math.PI)*360,0.88,0.55);const i=(y*W+x)*4;img.data[i]=rgb[0];img.data[i+1]=rgb[1];img.data[i+2]=rgb[2];img.data[i+3]=255;}
+    g.putImageData(img,0,0);
+  }
+  function drawOffset(g,W,H,t,rnd){
+    g.fillStyle="#0a1220";g.fillRect(0,0,W,H);const cx=W*0.5,cy=H*0.38;
+    for(let i=0;i<900;i++){const x=rnd()*W,y=rnd()*H,dx=x-cx,dy=y-cy,dist=Math.sqrt(dx*dx+dy*dy)+1,speed=(35+t*22)*Math.exp(-dist/280),ang=Math.atan2(dy,dx)+0.3,len=Math.min(18,speed*0.15);g.strokeStyle=`hsla(${175+speed},70%,55%,0.7)`;g.lineWidth=1.5;g.beginPath();g.moveTo(x,y);g.lineTo(x+Math.cos(ang)*len,y+Math.sin(ang)*len);g.stroke();}
+  }
+  function drawChange(g,W,H,t,rnd){
+    g.fillStyle="#152a45";g.fillRect(0,0,W,H);
+    for(let i=0;i<8+t*4;i++){const x=rnd()*W,y=rnd()*H,r=20+rnd()*50+t*6,intense=0.3+rnd()*0.7;g.fillStyle=intense>0.6?"#e05a5a":"#e8c547";g.globalAlpha=0.3+intense*0.4;g.beginPath();g.ellipse(x,y,r,r*(0.6+rnd()*0.4),rnd(),0,7);g.fill();}
+    g.globalAlpha=1;
+  }
+  render();
+})();
+
+  /* ===== Welcome → Radar → Handshake sequence ===== */
+  (function launchSequence() {
+    const welcome = document.getElementById("welcome");
+    const launch = document.getElementById("launch");
+    const wGo = document.getElementById("wGo");
+    if (!welcome || !launch || !wGo) return;
+
+    const radarCv = document.getElementById("radarCv");
+    const lMsg = document.getElementById("lMsg");
+    const lFill = document.getElementById("lFill");
+    const msgs = ["Powering up the radar", "Locking L-band & S-band", "Synthesizing aperture", "Acquiring first swath", "NASA × ISRO link up"];
+
+    function runRadar(done) {
+      launch.hidden = false;
+      const ctx = radarCv.getContext("2d");
+      const W = radarCv.width, H = radarCv.height, cx = W/2, cy = H/2;
+      let ang = 0, t0 = performance.now(), D = 3200;
+      const rings = [40, 70, 100, 130, 160];
+
+      function frame(now) {
+        const p = Math.min(1, (now - t0) / D);
+        ctx.fillStyle = "#060a12";
+        ctx.fillRect(0, 0, W, H);
+
+        // concentric rings
+        rings.forEach((r, i) => {
+          ctx.strokeStyle = `rgba(34,211,238,${0.12 + i * 0.04})`;
+          ctx.lineWidth = 1.5;
+          ctx.beginPath(); ctx.arc(cx, cy, r, 0, Math.PI * 2); ctx.stroke();
+        });
+
+        // sweeping beam
+        const beamAng = ang;
+        ctx.fillStyle = "rgba(34,211,238,0.08)";
+        ctx.beginPath();
+        ctx.moveTo(cx, cy);
+        ctx.arc(cx, cy, 170, beamAng, beamAng + 0.55);
+        ctx.closePath();
+        ctx.fill();
+        ctx.strokeStyle = "rgba(34,211,238,0.7)";
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+        ctx.moveTo(cx, cy);
+        ctx.lineTo(cx + Math.cos(beamAng) * 170, cy + Math.sin(beamAng) * 170);
+        ctx.stroke();
+
+        // blips
+        for (let i = 0; i < 6; i++) {
+          const ba = (i / 6) * Math.PI * 2 + ang * 0.3;
+          const br = 50 + (i % 3) * 40;
+          const bx = cx + Math.cos(ba) * br;
+          const by = cy + Math.sin(ba) * br;
+          ctx.fillStyle = `rgba(34,211,238,${0.4 + 0.4 * Math.sin(now / 200 + i)})`;
+          ctx.beginPath(); ctx.arc(bx, by, 3, 0, 7); ctx.fill();
+        }
+
+        // center core
+        ctx.fillStyle = "#22d3ee";
+        ctx.beginPath(); ctx.arc(cx, cy, 5, 0, 7); ctx.fill();
+        ctx.strokeStyle = "rgba(34,211,238,0.5)";
+        ctx.lineWidth = 2;
+        ctx.beginPath(); ctx.arc(cx, cy, 12, 0, 7); ctx.stroke();
+
+        ang += 0.04;
+        lFill.style.width = (p * 100) + "%";
+        lMsg.textContent = msgs[Math.min(msgs.length - 1, Math.floor(p * msgs.length))];
+
+        if (p < 1) requestAnimationFrame(frame);
+        else done();
+      }
+      requestAnimationFrame(frame);
+    }
+
+    wGo.addEventListener("click", () => {
+      welcome.hidden = true;
+      runRadar(() => {
+        launch.classList.add("out");
+        setTimeout(() => { launch.hidden = true; }, 550);
+      });
+    });
+
+    // focus button
+    wGo.focus();
+  })();
+
+</script>
+
+<script>
+/* ===== Big 3D satellite background (pure canvas, no libraries) ===== */
+(function satellite3D() {
+  const cv = document.getElementById("sat3d");
+  if (!cv) return;
+  const ctx = cv.getContext("2d");
+  const reduce = window.matchMedia && matchMedia("(prefers-reduced-motion: reduce)").matches;
+  let W = 0, H = 0, dpr = 1, stars = [];
+  let mx = 0, my = 0, tx = 0, ty = 0;
+
+  function resize() {
+    dpr = Math.min(2, window.devicePixelRatio || 1);
+    W = window.innerWidth; H = window.innerHeight;
+    cv.width = W * dpr; cv.height = H * dpr;
+    cv.style.width = W + "px"; cv.style.height = H + "px";
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    stars = [];
+    for (let i = 0; i < 70; i++) stars.push([Math.random() * W, Math.random() * H, Math.random() * 1.4 + 0.3, Math.random() * 6.28]);
+  }
+  window.addEventListener("resize", resize);
+  window.addEventListener("pointermove", e => { tx = e.clientX / W - 0.5; ty = e.clientY / H - 0.5; }, { passive: true });
+  resize();
+
+  /* ---------- model ---------- */
+  const items = []; // {pts:[[x,y,z]..], col:[r,g,b], a, edge, lw} or {line:[p,q], col, lw}
+  const add = (pts, col, a, edge, lw) => items.push({ pts, col, a: a == null ? 1 : a, edge, lw: lw || 1 });
+  const line = (p, q, col, lw) => items.push({ line: [p, q], col, lw: lw || 1 });
+
+  function box(cx, cy, cz, hx, hy, hz, col, edge, a) {
+    const x0 = cx - hx, x1 = cx + hx, y0 = cy - hy, y1 = cy + hy, z0 = cz - hz, z1 = cz + hz;
+    const v = [[x0,y0,z0],[x1,y0,z0],[x1,y1,z0],[x0,y1,z0],[x0,y0,z1],[x1,y0,z1],[x1,y1,z1],[x0,y1,z1]];
+    [[0,1,2,3],[4,5,6,7],[0,1,5,4],[3,2,6,7],[0,3,7,4],[1,2,6,5]].forEach(f => add(f.map(i => v[i]), col, a, edge));
+  }
+  const norm = v => { const l = Math.hypot(v[0], v[1], v[2]) || 1; return [v[0]/l, v[1]/l, v[2]/l]; };
+  const cross = (a, b) => [a[1]*b[2]-a[2]*b[1], a[2]*b[0]-a[0]*b[2], a[0]*b[1]-a[1]*b[0]];
+
+  // bus
+  box(0, 0, 0, 1.1, 1.0, 1.5, [196, 206, 224], "rgba(255,255,255,.25)");
+  box(0, -0.75, 0, 1.14, 0.28, 1.54, [214, 168, 70], "rgba(255,230,160,.4)");   // gold thermal blanket
+  box(0, 1.15, 0.7, 0.45, 0.15, 0.45, [120, 140, 170], "rgba(255,255,255,.2)"); // top equipment
+  box(0, -1.25, 0, 0.5, 0.25, 0.5, [150, 165, 190], "rgba(255,255,255,.2)");    // nadir antenna box
+  box(-1.15, 0.3, -1.2, 0.12, 0.12, 0.12, [90, 100, 120], "rgba(255,255,255,.2)"); // star tracker
+  box(-1.15, 0.3, 1.2, 0.12, 0.12, 0.12, [90, 100, 120], "rgba(255,255,255,.2)");
+
+  // solar wings
+  [-1, 1].forEach(s => {
+    box(s * 1.35, 0.1, 0, 0.3, 0.04, 0.06, [160, 170, 190], "rgba(255,255,255,.2)"); // arm
+    for (let i = 0; i < 6; i++) {
+      for (let k = 0; k < 3; k++) {
+        const x = s * (1.9 + i * 1.07);
+        const z = (k - 1) * 1.33;
+        box(x, 0.1, z, 0.5, 0.035, 0.63, [18, 44, 104], "rgba(34,211,238,.5)");
+      }
+    }
+  });
+
+  // reflector (paraboloid mesh)
+  const V = [1.6, 5.2, 0.2];
+  const D = norm([-0.5, -0.72, 0.32]);
+  const Hh = Math.abs(D[1]) < 0.9 ? [0, 1, 0] : [1, 0, 0];
+  const U = norm(cross(Hh, D)), Vv = cross(D, U);
+  const R = 2.9, F = 2.1, rings = 6, seg = 32;
+  const loc = (a, h, b) => [V[0] + U[0]*a + D[0]*h + Vv[0]*b, V[1] + U[1]*a + D[1]*h + Vv[1]*b, V[2] + U[2]*a + D[2]*h + Vv[2]*b];
+  const P = [];
+  for (let i = 0; i <= rings; i++) {
+    const r = R * i / rings, row = [];
+    for (let j = 0; j < seg; j++) {
+      const th = j / seg * Math.PI * 2;
+      row.push(loc(r * Math.cos(th), r * r / (4 * F), r * Math.sin(th)));
+    }
+    P.push(row);
+  }
+  const gold = [232, 178, 60];
+  for (let i = 0; i < rings; i++) for (let j = 0; j < seg; j++) {
+    const j2 = (j + 1) % seg;
+    if (i === 0) add([P[0][j], P[1][j], P[1][j2]], gold, 0.5, "rgba(251,191,36,.55)");
+    else add([P[i][j], P[i][j2], P[i+1][j2], P[i+1][j]], gold, 0.5, "rgba(251,191,36,.55)");
+  }
+  // feed horn + struts
+  const Fp = loc(0, F, 0);
+  box(Fp[0], Fp[1], Fp[2], 0.16, 0.16, 0.16, [210, 220, 235], "rgba(255,255,255,.4)");
+  for (let j = 0; j < seg; j += 8) line(Fp, P[rings][j], "rgba(251,191,36,.7)", 1.4);
+
+  // boom (truss from bus top to reflector vertex)
+  const B0 = [0.4, 1.3, 0.0], B1 = V;
+  const bd = norm([B1[0]-B0[0], B1[1]-B0[1], B1[2]-B0[2]]);
+  const bh = Math.abs(bd[1]) < 0.9 ? [0, 1, 0] : [1, 0, 0];
+  const bu = norm(cross(bh, bd)), bv = cross(bd, bu);
+  const off = [[0.12, 0], [-0.06, 0.1], [-0.06, -0.1]];
+  const N = 7, pt = (t, k) => [B0[0] + (B1[0]-B0[0])*t + bu[0]*off[k][0] + bv[0]*off[k][1],
+                              B0[1] + (B1[1]-B0[1])*t + bu[1]*off[k][0] + bv[1]*off[k][1],
+                              B0[2] + (B1[2]-B0[2])*t + bu[2]*off[k][0] + bv[2]*off[k][1]];
+  for (let n = 0; n < N; n++) for (let k = 0; k < 3; k++) {
+    line(pt(n / N, k), pt((n + 1) / N, k), "rgba(220,230,245,.85)", 2);
+    line(pt(n / N, k), pt((n + 1) / N, (k + 1) % 3), "rgba(148,163,184,.7)", 1);
+  }
+
+  /* ---------- render ---------- */
+  const L = norm([-0.45, 0.75, 0.55]);
+  const CAM = 34;
+  function frame(now) {
+    const t = now / 1000;
+    mx += (tx - mx) * 0.04; my += (ty - my) * 0.04;
+    ctx.clearRect(0, 0, W, H);
+
+    // stars
+    for (const s of stars) {
+      ctx.fillStyle = "rgba(200,225,255," + (0.25 + 0.3 * Math.sin(t * 1.3 + s[3])) + ")";
+      ctx.beginPath(); ctx.arc(s[0], s[1], s[2], 0, 6.283); ctx.fill();
+    }
+
+    const yaw = 0.55 + (reduce ? 0 : Math.sin(t * 0.22) * 0.85) + mx * 0.5;
+    const pitch = 0.32 + my * 0.3 + (reduce ? 0 : Math.sin(t * 0.17) * 0.06);
+    const ca = Math.cos(yaw), sa = Math.sin(yaw), cb = Math.cos(pitch), sb = Math.sin(pitch);
+    const u = Math.max(W * 0.042, H * 0.058);
+    const cx = W * 0.6, cy = H * 0.56 + Math.sin(t * 0.6) * 6;
+
+    const tr = p => {
+      const x = p[0], y = p[1] - 2.4, z = p[2];
+      const x1 = x * ca + z * sa, z1 = -x * sa + z * ca;
+      const y2 = y * cb - z1 * sb, z2 = y * sb + z1 * cb;
+      return [x1, y2, z2];
+    };
+    const proj = p => { const k = CAM / (CAM - p[2]); return [cx + p[0] * u * k, cy - p[1] * u * k]; };
+
+    const draw = [];
+    for (const it of items) {
+      if (it.line) {
+        const a = tr(it.line[0]), b = tr(it.line[1]);
+        draw.push({ z: (a[2] + b[2]) / 2, it, a, b });
+      } else {
+        const q = it.pts.map(tr);
+        let z = 0; for (const p of q) z += p[2];
+        draw.push({ z: z / q.length, it, q });
+      }
+    }
+    draw.sort((m, n) => m.z - n.z);
+
+    for (const d of draw) {
+      const it = d.it;
+      if (it.line) {
+        const a = proj(d.a), b = proj(d.b);
+        ctx.strokeStyle = it.col; ctx.lineWidth = it.lw;
+        ctx.beginPath(); ctx.moveTo(a[0], a[1]); ctx.lineTo(b[0], b[1]); ctx.stroke();
+        continue;
+      }
+      const q = d.q;
+      const nrm = norm(cross([q[1][0]-q[0][0], q[1][1]-q[0][1], q[1][2]-q[0][2]],
+                             [q[2][0]-q[0][0], q[2][1]-q[0][1], q[2][2]-q[0][2]]));
+      const lam = Math.abs(nrm[0]*L[0] + nrm[1]*L[1] + nrm[2]*L[2]);
+      const sh = 0.32 + 0.68 * lam;
+      ctx.fillStyle = "rgba(" + (it.col[0]*sh|0) + "," + (it.col[1]*sh|0) + "," + (it.col[2]*sh|0) + "," + it.a + ")";
+      ctx.beginPath();
+      q.forEach((p, i) => { const s = proj(p); i ? ctx.lineTo(s[0], s[1]) : ctx.moveTo(s[0], s[1]); });
+      ctx.closePath(); ctx.fill();
+      if (it.edge) { ctx.strokeStyle = it.edge; ctx.lineWidth = it.lw; ctx.stroke(); }
+    }
+
+    // faint radar beam from reflector toward the ground
+    const rc = proj(tr(loc(0, R * R / (4 * F) * 0.6, 0)));
+    const g = ctx.createRadialGradient(rc[0], rc[1], 0, rc[0], rc[1], u * 9);
+    g.addColorStop(0, "rgba(34,211,238,.10)"); g.addColorStop(1, "rgba(34,211,238,0)");
+    ctx.fillStyle = g; ctx.fillRect(0, 0, W, H);
+
+    if (!reduce) requestAnimationFrame(frame);
+  }
+  requestAnimationFrame(frame);
+})();
+</script>
+
+<script>
+(function hub(){
+  const $=(s,r=document)=>r.querySelector(s), $$=(s,r=document)=>Array.from(r.querySelectorAll(s));
+  /* tabs */
+  function open(name){
+    $$("#hubTabs .tab").forEach(b=>b.classList.toggle("active",b.dataset.tab===name));
+    $$(".tabpanel").forEach(p=>p.classList.toggle("active",p.id==="tab-"+name));
+    if(name==="bands")drawBands(); if(name==="calc")calc(); if(name==="cases")buildCases(); if(name==="problem")drawProblem();
+  }
+  $$("#hubTabs .tab").forEach(b=>b.addEventListener("click",()=>open(b.dataset.tab)));
+  window.__hubOpen=open;
+
+  /* seeded rng */
+  function rng(a){return function(){let t=a+=0x6D2B79F5;t=Math.imul(t^t>>>15,t|1);t^=t+Math.imul(t^t>>>7,t|61);return((t^t>>>14)>>>0)/4294967296;};}
+  function speckle(g,W,H,r,amt){const im=g.getImageData(0,0,W,H),d=im.data;for(let i=0;i<d.length;i+=4){const s=1+(r()-.5)*amt;d[i]*=s;d[i+1]*=s;d[i+2]*=s;}g.putImageData(im,0,0);}
+  function hsl(h,s,l){const a=s*Math.min(l,1-l),f=n=>{const k=(n+h/30)%12;return Math.round((l-a*Math.max(-1,Math.min(k-3,9-k,1)))*255);};return[f(0),f(8),f(4)];}
+
+  /* case-study imagery */
+  const CASES=[
+   {k:"flood",t:"Flood after heavy rain",p:"Calm floodwater is dark in radar because it mirrors the beam away. Comparing a dry reference with a new date outlines the inundated land within hours.",tags:["L-band","GCOV backscatter","Change detection"],drv:"Driver: rainfall, river stage, storm surge"},
+   {k:"volcano",t:"Volcano inflation",p:"Rising magma pushes the ground toward the satellite. Each rainbow ring is half a wavelength of motion, so rings count centimetres.",tags:["L-band","GUNW interferogram","Deformation"],drv:"Driver: magma movement"},
+   {k:"glacier",t:"Glacier flow",p:"Ice moves too fast for interferometry near the centre, so pixel-offset tracking follows surface texture between dates to map velocity.",tags:["L + S band","GOFF offsets","Cryosphere"],drv:"Driver: gravity, meltwater, temperature"},
+   {k:"agri",t:"Farmland moisture",p:"Wetter soil raises radar return, and growing crops add volume scattering. Centre-pivot circles are classic radar features.",tags:["S + L band","Soil moisture","Agriculture"],drv:"Driver: irrigation, rainfall, crop stage"},
+   {k:"forest",t:"Forest disturbance",p:"L-band reacts to trunks and branches. Clear-cut or burned patches lose volume scattering and stand out in the colour composite.",tags:["L-band","GCOV polarimetry","Biomass"],drv:"Driver: logging, fire, storms"},
+   {k:"city",t:"City subsidence",p:"Groundwater pumping or soft sediments make streets sink by a few centimetres a year. Radar maps it block by block.",tags:["L-band","GUNW time series","Urban"],drv:"Driver: groundwater extraction, loading"}
+  ];
+  function art(c,k,seed){
+    const g=c.getContext("2d"),W=c.width,H=c.height,r=rng(seed);
+    g.fillStyle="#14301f";g.fillRect(0,0,W,H);
+    if(k==="flood"){
+      for(let i=0;i<900;i++){g.fillStyle=r()>.5?"#2d6a43":"#1f4d30";g.beginPath();g.arc(r()*W,r()*H,2+r()*9,0,7);g.fill();}
+      g.fillStyle="#04070f";g.beginPath();g.moveTo(0,H*.55);g.bezierCurveTo(W*.3,H*.35,W*.6,H*.75,W,H*.45);g.lineTo(W,H*.7);g.bezierCurveTo(W*.6,H*1.05,W*.3,H*.7,0,H*.8);g.closePath();g.fill();
+      g.fillStyle="rgba(4,7,15,.85)";g.beginPath();g.ellipse(W*.65,H*.62,W*.2,H*.16,.2,0,7);g.fill();
+      g.fillStyle="#c9e4ff";for(let i=0;i<14;i++)g.fillRect(W*.05+r()*W*.3,H*.12+r()*H*.2,6,4);
+    }else if(k==="volcano"){
+      g.fillStyle="#0b1220";g.fillRect(0,0,W,H);const im=g.createImageData(W,H),cx=W*.5,cy=H*.5,sg=W*.16;
+      for(let y=0;y<H;y++)for(let x=0;x<W;x++){const d=((x-cx)**2+(y-cy)**2);const ph=((13*Math.exp(-d/(2*sg*sg))+0.003*x)%1)*360;const c=hsl(ph,.85,.52),i=(y*W+x)*4;im.data[i]=c[0];im.data[i+1]=c[1];im.data[i+2]=c[2];im.data[i+3]=255;}
+      g.putImageData(im,0,0);
+    }else if(k==="glacier"){
+      g.fillStyle="#2a3441";g.fillRect(0,0,W,H);
+      g.fillStyle="#dfe9f5";g.beginPath();g.moveTo(W*.35,0);g.lineTo(W*.65,0);g.bezierCurveTo(W*.7,H*.4,W*.58,H*.7,W*.52,H*.95);g.lineTo(W*.44,H*.95);g.bezierCurveTo(W*.4,H*.65,W*.3,H*.4,W*.35,0);g.fill();
+      for(let i=0;i<260;i++){const y=r()*H*.9,x=W*.5+(r()-.5)*W*.2*(1-y/H*.6),sp=1-Math.abs(x-W*.5)/(W*.14);g.strokeStyle="hsla("+(190-sp*70)+",80%,55%,.8)";g.lineWidth=1.5;g.beginPath();g.moveTo(x,y);g.lineTo(x+(r()-.5)*4,y+6+sp*14);g.stroke();}
+    }else if(k==="agri"){
+      const cols=["#9bd04f","#3f7a2c","#b9dc66","#4f8a36","#7aa83c"];
+      for(let a=0;a<5;a++)for(let b=0;b<8;b++){g.fillStyle=cols[(a*3+b)%5];g.fillRect(b*W/8+2,a*H/5+2,W/8-4,H/5-4);}
+      [[.2,.3],[.6,.6],[.85,.25]].forEach(([fx,fy])=>{g.fillStyle="#d8f08a";g.beginPath();g.arc(fx*W,fy*H,34,0,7);g.fill();g.strokeStyle="#45702c";g.lineWidth=2;g.beginPath();g.moveTo(fx*W,fy*H);g.lineTo(fx*W+34,fy*H);g.stroke();});
+    }else if(k==="forest"){
+      for(let i=0;i<1100;i++){g.fillStyle=r()>.5?"#2f8a4a":"#1f6a38";g.beginPath();g.arc(r()*W,r()*H,2+r()*8,0,7);g.fill();}
+      for(let i=0;i<5;i++){g.fillStyle="#b0338f";g.beginPath();g.ellipse(r()*W,r()*H,25+r()*40,15+r()*25,r(),0,7);g.fill();}
+      g.strokeStyle="#0a1a40";g.lineWidth=6;g.beginPath();g.moveTo(0,H*.8);g.bezierCurveTo(W*.4,H*.6,W*.6,H*.95,W,H*.7);g.stroke();
+    }else{
+      g.fillStyle="#1b2433";g.fillRect(0,0,W,H);
+      for(let a=0;a<6;a++)for(let b=0;b<10;b++){const d=Math.hypot(b-5,a-3);const sink=Math.max(0,1-d/4.2);const c=hsl(210-sink*210,.7,.5);g.fillStyle="rgb("+c.join(",")+")";g.fillRect(b*W/10+3,a*H/6+3,W/10-6,H/6-6);}
+    }
+    speckle(g,W,H,r,k==="volcano"?.08:.32);
+    const v=g.createRadialGradient(W/2,H/2,H*.25,W/2,H/2,H*.8);v.addColorStop(0,"rgba(0,0,0,0)");v.addColorStop(1,"rgba(0,0,0,.4)");g.fillStyle=v;g.fillRect(0,0,W,H);
+  }
+  let built=false;
+  function buildCases(){
+    if(built)return;built=true;
+    $("#caseGrid").innerHTML=CASES.map((c,i)=>`<div class="case"><canvas id="cs${i}" width="480" height="300"></canvas><div class="cb"><h4>${c.t}</h4><p>${c.p}</p><div class="tags">${c.tags.map(t=>`<span>${t}</span>`).join("")}</div><p class="cap" style="margin-top:10px">${c.drv}</p></div></div>`).join("");
+    CASES.forEach((c,i)=>art($("#cs"+i),c.k,100+i*17));
+  }
+  function drawProblem(){
+    const c=$("#cvProblem");if(!c||c.dataset.done)return;c.dataset.done=1;const g=c.getContext("2d"),W=c.width,H=c.height,r=rng(7);
+    g.fillStyle="#1d3a27";g.fillRect(0,0,W,H);for(let i=0;i<500;i++){g.fillStyle=r()>.5?"#2d6a43":"#1f4d30";g.beginPath();g.arc(r()*W,r()*H,2+r()*8,0,7);g.fill();}
+    g.fillStyle="#050a14";g.beginPath();g.moveTo(W*.5,H*.45);g.bezierCurveTo(W*.7,H*.3,W*.85,H*.6,W,H*.5);g.lineTo(W,H*.7);g.bezierCurveTo(W*.8,H*.85,W*.65,H*.6,W*.5,H*.7);g.fill();
+    g.fillStyle="rgba(235,240,248,.96)";for(let i=0;i<40;i++){g.beginPath();g.arc(r()*W*.5,r()*H,18+r()*34,0,7);g.fill();}
+    g.fillStyle="rgba(0,0,0,.65)";g.fillRect(8,8,150,22);g.fillRect(W-158,8,150,22);g.fillStyle="#fff";g.font="600 12px Inter,sans-serif";g.fillText("Optical: blocked",16,23);g.fillText("Radar: sees surface",W-150,23);
+    g.strokeStyle="#22d3ee";g.setLineDash([5,5]);g.beginPath();g.moveTo(W*.5,0);g.lineTo(W*.5,H);g.stroke();g.setLineDash([]);
+    speckle(g,W,H,r,.25);
+  }
+  function wave(g,W,y,lam,col,amp){g.strokeStyle=col;g.lineWidth=2.5;g.beginPath();for(let x=0;x<=W;x++){const yy=y+Math.sin(x/lam*Math.PI*2)*amp;x?g.lineTo(x,yy):g.moveTo(x,yy);}g.stroke();}
+  function drawBands(){
+    const c=$("#cvBands"),g=c.getContext("2d"),W=c.width,H=c.height;g.clearRect(0,0,W,H);g.fillStyle="#0b1220";g.fillRect(0,0,W,H);
+    wave(g,W,H*.28,24*5,"#22d3ee",34);wave(g,W,H*.74,9.4*5,"#fbbf24",34);
+    g.fillStyle="#e8eef7";g.font="600 13px Inter,sans-serif";g.fillText("L-band · 24 cm",12,18);g.fillText("S-band · 9.4 cm",12,H-10);
+  }
+  function calc(){
+    const s=$("#calcSlider"),d=parseFloat(s.value);$("#calcVal").textContent=d+" cm";
+    const fl=2*d/24,fs=2*d/9.4;$("#fL").textContent=fl.toFixed(2);$("#fS").textContent=fs.toFixed(2);
+    $("#phL").textContent=(fl*360%360).toFixed(0)+"° ("+Math.floor(fl)+" cycles)";$("#phS").textContent=(fs*360%360).toFixed(0)+"° ("+Math.floor(fs)+" cycles)";
+    const c=$("#cvCalc"),g=c.getContext("2d"),W=c.width,H=c.height;g.fillStyle="#0b1220";g.fillRect(0,0,W,H);
+    [[fl,8],[fs,68]].forEach(([f,y])=>{for(let x=0;x<W;x++){const ph=((x/W)*f%1)*360,col=hsl(ph,.85,.52);g.fillStyle="rgb("+col.join(",")+")";g.fillRect(x,y,1,44);}});
+  }
+  $("#calcSlider").addEventListener("input",calc);
+  drawProblem();
+  if(location.hash==="#hub")open("problem");
+})();
+</script>
+
+
+<script>
+(function enhancedTools(){
+ const $=id=>document.getElementById(id);
+ const regions={
+ flood:{title:"Floodplain scenario",desc:"Water expansion can reduce radar backscatter over smooth open water while flooded vegetation may remain bright.",method:"Compare calibrated intensity, coherence and optical/gauge context.",product:"GRD/RTC",band:"L-band"},
+ quake:{title:"Earthquake deformation scenario",desc:"A displacement field may appear as interferometric phase fringes; unwrap, remove atmosphere and validate.",method:"Use a coherent interferometric pair, phase unwrapping and geophysical modeling.",product:"GUNW",band:"L-band"},
+ delta:{title:"Delta / wetland scenario",desc:"Vegetation structure, water level and moisture all influence radar response; avoid treating brightness as water alone.",method:"Time-series intensity + coherence + seasonal/context layers.",product:"GCOV",band:"L-band"},
+ ice:{title:"Ice / glacier scenario",desc:"Surface motion and changing scattering can affect coherence; interpret seasonal timing and terrain.",method:"Interferometry or pixel offsets with geometry and topographic checks.",product:"GUNW / GOFF",band:"L-band"},
+ city:{title:"Urban subsidence scenario",desc:"Persistent coherent buildings can support deformation analysis, but atmosphere and reference stability matter.",method:"Multi-date interferometry / time series with stable reference points.",product:"GUNW",band:"L-band"}
+ };
+ document.querySelectorAll(".mapdot").forEach(pin=>pin.addEventListener("click",()=>{
+   document.querySelectorAll(".mapdot").forEach(p=>p.classList.remove("active"));pin.classList.add("active");
+   const r=regions[pin.dataset.region];$("regionTitle").textContent=r.title;$("regionDesc").textContent=r.desc;$("regionMethod").textContent=r.method;$("regionProduct").textContent=r.product;$("regionBand").textContent=r.band;
+ }));
+ function radar(canvas,kind){
+   const c=canvas.getContext("2d"),w=canvas.width,h=canvas.height;
+   let seed=kind==="before"?8:23;const rand=()=>{seed=(seed*9301+49297)%233280;return seed/233280};
+   const im=c.createImageData(w,h);
+   for(let y=0;y<h;y++)for(let x=0;x<w;x++){
+     let n=rand(),v=25+n*65;
+     if((x>w*.48&&x<w*.82&&y>h*.25&&y<h*.75)){v=kind==="before"?110+n*90:35+n*45}
+     if((x/w*8|0)%2===0&&(y/h*8|0)%2===0)v+=15;
+     const i=(y*w+x)*4;im.data[i]=v*.55;im.data[i+1]=v*.85;im.data[i+2]=v;im.data[i+3]=255;
+   }
+   c.putImageData(im,0,0);c.strokeStyle="rgba(34,211,238,.35)";c.lineWidth=2;c.strokeRect(w*.48,h*.25,w*.34,h*.5);
+   c.fillStyle="#e8eef7";c.font="24px sans-serif";c.fillText(kind==="before"?"BEFORE · SIMULATED":"AFTER · SIMULATED",24,36);
+ }
+ const a=$("cmpAfter"),b=$("cmpBefore");if(a&&b){radar(a,"after");radar(b,"before");}
+ $("cmpRange")?.addEventListener("input",e=>$("cmpOverlay").style.width=e.target.value+"%");
+ $("qRun")?.addEventListener("click",()=>{
+   let score=100,notes=[];
+   if($("qPair").value==="long"){score-=25;notes.push("Long time gap: seasonal and surface changes may be mixed.");}
+   if($("qPair").value==="geom"){score-=30;notes.push("Geometry mismatch: align viewing geometry or use suitable products.");}
+   if($("qSurface").value==="veg"){score-=25;notes.push("Vegetation can decorrelate and change scattering.");}
+   if($("qSurface").value==="water"){score-=20;notes.push("Open water often has low coherence; use intensity/context carefully.");}
+   if($("qAtmos").value==="partial"){score-=15;notes.push("Atmospheric effects only partly assessed.");}
+   if($("qAtmos").value==="none"){score-=30;notes.push("Atmospheric and processing QA not assessed.");}
+   score=Math.max(10,score);
+   $("qBar").style.width=score+"%";
+   $("qTitle").textContent=score>=75?"Favorable conditions (heuristic)":score>=50?"Caution: mixed conditions":"Low confidence conditions (heuristic)";
+   $("qText").textContent="Checklist score: "+score+"/100. This is not a probability of correctness.";
+   $("qList").innerHTML=(notes.length?notes:["No major caution selected; still check product QA, reference stability and independent evidence."]).map(n=>"<li>"+n+"</li>").join("");
+ });
+})();
+</script>
+
+<script>
+(function router(){
+  const ORDER=["home","explore","problem","solution","cases","mission","bands","products","calc","glossary","data","docs","faq","stack","challenges","sources","maplab","compare","quality","about","team"];
+  const LABEL={home:"Home",explore:"Explorer",problem:"Problem",solution:"Solution",cases:"Case studies",mission:"Mission",bands:"L vs S",products:"Products",calc:"Calculator",glossary:"Glossary",data:"Get data",docs:"Documents",faq:"FAQ",stack:"Tech Stack",challenges:"More Challenges",sources:"Sources",maplab:"Geo Lab",compare:"Compare",quality:"Quality",about:"About",team:"Team"};
+  const HUB=["problem","solution","cases","mission","bands","products","calc","glossary","faq"];
+  const SINGLE={stack:["stack"],challenges:["challenges"],sources:["sources"],maplab:["maplab"],compare:["compare"],quality:["quality"],home:["home","features"],explore:["explore"],data:["data"],docs:["docs"],about:["about"],team:["team"]};
+  const ALL=["home","features","explore","hub","data","docs","stack","challenges","sources","maplab","compare","quality","about","team"];
+  const $=id=>document.getElementById(id);
+  function pager(name){
+    const i=ORDER.indexOf(name),p=ORDER[i-1],n=ORDER[i+1];
+    return '<div class="pager"><span>'+(p?'<a href="#'+p+'">← '+LABEL[p]+'</a>':'')+'</span><span>'+(n?'<a href="#'+n+'">'+LABEL[n]+' →</a>':'')+'</span></div>';
+  }
+  function go(){
+    let name=(location.hash||"#home").slice(1);
+    if(name==="hub")name="problem";
+    if(!ORDER.includes(name))name="home";
+    ALL.forEach(id=>{const e=$(id);if(e)e.style.display="none";});
+    if(HUB.includes(name)){
+      $("hub").style.display="";
+      if(window.__hubOpen)window.__hubOpen(name);
+      const panel=$("tab-"+name);
+      panel.querySelectorAll(".pager").forEach(x=>x.remove());
+      panel.insertAdjacentHTML("beforeend",pager(name));
+    }else{
+      SINGLE[name].forEach(id=>{const e=$(id);if(e)e.style.display="";});
+      const last=$(SINGLE[name][SINGLE[name].length-1]);
+      const inner=last&&last.querySelector(".section-inner");
+      if(inner&&name!=="home"){inner.querySelectorAll(":scope>.pager").forEach(x=>x.remove());inner.insertAdjacentHTML("beforeend",pager(name));}
+    }
+    document.querySelectorAll("#navLinks a").forEach(a=>{
+      const on=a.getAttribute("href")==="#"+name;a.classList.toggle("active",on);
+      if(on)a.scrollIntoView({inline:"center",block:"nearest"});
+    });
+    document.title=(name==="home"?"":LABEL[name]+" · ")+"Dancing with the SARs · NISAR Explorer";
+    window.scrollTo(0,0);
+  }
+  window.addEventListener("hashchange",go);
+  go();
+})();
+</script>
+</body>
+</html>
